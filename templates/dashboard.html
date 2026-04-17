@@ -21,8 +21,9 @@
     </div>
     <div id="joinError" class="error-msg" style="display:none;max-width:400px;margin:0 auto 24px;"></div>
 
+    <!-- Game Cards -->
     <div class="games-grid">
-        <div class="game-card" onclick="createRoom('blokus')">
+        <div class="game-card" onclick="showCreateModal('blokus')">
             <div class="game-icon">🟦</div>
             <h3>Blokus</h3>
             <p>在 20×20 棋盤上放置多形方塊，角對角連接搶佔領地！</p>
@@ -31,7 +32,7 @@
                 <span class="game-players">2-4 人</span>
             </div>
         </div>
-        <div class="game-card" onclick="createRoom('draw-guess')">
+        <div class="game-card" onclick="showCreateModal('draw-guess')">
             <div class="game-icon">🎨</div>
             <h3>你畫我猜</h3>
             <p>一人畫圖其他人猜，LLM 出題讓每局都是全新挑戰！</p>
@@ -40,7 +41,7 @@
                 <span class="game-players">2-8 人</span>
             </div>
         </div>
-        <div class="game-card" onclick="createRoom('cant-stop')">
+        <div class="game-card" onclick="showCreateModal('cant-stop')">
             <div class="game-icon">🎲</div>
             <h3>Can't Stop</h3>
             <p>擲骰攻頂的冒險之旅，貪心就會前功盡棄！</p>
@@ -50,27 +51,75 @@
             </div>
         </div>
     </div>
+
+    <!-- Public Rooms -->
+    <div class="public-rooms-section">
+        <div class="section-header">
+            <h2>🌐 公開房間</h2>
+            <button class="btn btn-sm btn-secondary" onclick="loadPublicRooms()">↻ 重新整理</button>
+        </div>
+        <div id="publicRooms" class="public-rooms-list">
+            <p class="empty-hint">載入中...</p>
+        </div>
+    </div>
 </main>
+
+<!-- Create Room Modal -->
+<div id="createModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+    <div class="modal-card">
+        <h3 id="modalTitle">建立房間</h3>
+        <div class="modal-body">
+            <label class="toggle-row">
+                <span>公開房間</span>
+                <span class="toggle-hint">其他玩家可在大廳看到並加入</span>
+                <input type="checkbox" id="isPublic" class="toggle-input">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" onclick="confirmCreate()">建立</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 {% block extra_js %}
 <script>
+const GAME_NAMES = { blokus: 'Blokus', 'draw-guess': '你畫我猜', 'cant-stop': "Can't Stop" };
+const GAME_ICONS = { blokus: '🟦', 'draw-guess': '🎨', 'cant-stop': '🎲' };
+let pendingGameType = null;
+
 async function logout() {
     await fetch('/api/v1/auth/logout', { method: 'POST' });
     window.location.href = '/';
 }
 
-async function createRoom(gameType) {
+// --- Create Room Modal ---
+function showCreateModal(gameType) {
+    pendingGameType = gameType;
+    document.getElementById('modalTitle').textContent = `建立 ${GAME_NAMES[gameType]} 房間`;
+    document.getElementById('isPublic').checked = false;
+    document.getElementById('createModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('createModal').style.display = 'none';
+    pendingGameType = null;
+}
+
+async function confirmCreate() {
+    if (!pendingGameType) return;
+    const isPublic = document.getElementById('isPublic').checked;
     const res = await fetch('/api/v1/rooms/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game_type: gameType }),
+        body: JSON.stringify({ game_type: pendingGameType, is_public: isPublic }),
     });
     const data = await res.json();
-    if (res.ok) {
-        window.location.href = `/rooms/${data.room_id}`;
-    }
+    if (res.ok) window.location.href = `/rooms/${data.room_id}`;
 }
 
+// --- Join Room ---
 async function joinRoom() {
     const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
     const errEl = document.getElementById('joinError');
@@ -84,9 +133,38 @@ async function joinRoom() {
         errEl.style.display = 'block';
     }
 }
-
 document.getElementById('joinRoomCode').addEventListener('keydown', e => {
     if (e.key === 'Enter') joinRoom();
 });
+
+// --- Public Rooms ---
+async function loadPublicRooms() {
+    const el = document.getElementById('publicRooms');
+    try {
+        const res = await fetch('/api/v1/rooms/');
+        const rooms = await res.json();
+        if (!rooms.length) {
+            el.innerHTML = '<p class="empty-hint">目前沒有公開房間</p>';
+            return;
+        }
+        el.innerHTML = rooms.map(r => `
+            <div class="public-room-card" onclick="location.href='/rooms/${r.room_id}'">
+                <div class="pr-icon">${GAME_ICONS[r.game_type] || '🎮'}</div>
+                <div class="pr-info">
+                    <strong>${r.game_name}</strong>
+                    <div class="pr-meta">
+                        👑 ${r.host} ・ ${r.players.length}/${r.max_players} 人
+                    </div>
+                </div>
+                <div class="pr-join">加入</div>
+            </div>
+        `).join('');
+    } catch {
+        el.innerHTML = '<p class="empty-hint">載入失敗</p>';
+    }
+}
+
+loadPublicRooms();
+setInterval(loadPublicRooms, 5000);
 </script>
 {% endblock %}

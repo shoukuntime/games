@@ -16,7 +16,7 @@
                 房間代碼：<strong id="roomCode">{{ room_id }}</strong>
                 <button class="btn btn-sm btn-secondary" onclick="copyCode()">複製</button>
             </div>
-            <p class="lobby-hint">將房間代碼分享給朋友加入！</p>
+            <p class="lobby-hint" id="lobbyHint">將房間代碼分享給朋友加入！</p>
         </div>
         <div class="lobby-body">
             <div class="players-list" id="playersList"></div>
@@ -62,6 +62,13 @@ function updateLobby(data) {
         `<div class="player-item">${p === data.host ? '👑 ' : ''}${p}${p === USERNAME ? ' (你)' : ''}</div>`
     ).join('');
     document.getElementById('playerCount').textContent = data.players.length;
+
+    const hint = document.getElementById('lobbyHint');
+    if (data.is_public) {
+        hint.innerHTML = '🌐 公開房間 — 其他玩家可在大廳加入';
+    } else {
+        hint.innerHTML = '🔒 私人房間 — 將代碼分享給朋友';
+    }
 
     const isHost = (data.host === USERNAME);
     const enough = data.players.length >= MIN_PLAYERS;

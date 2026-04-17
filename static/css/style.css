@@ -125,6 +125,66 @@ a:hover { text-decoration: underline; }
 .page-header h1 { font-size: 1.8rem; font-weight: 800; }
 .page-header p { color: var(--text-light); margin-top: 4px; }
 
+/* === Public Rooms Section === */
+.public-rooms-section { margin-top: 40px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-header h2 { font-size: 1.2rem; font-weight: 700; }
+.public-rooms-list { display: flex; flex-direction: column; gap: 8px; }
+.empty-hint { color: var(--text-light); font-size: 0.9rem; text-align: center; padding: 20px; }
+.public-room-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.public-room-card:hover { transform: translateX(4px); box-shadow: var(--shadow-lg); }
+.pr-icon { font-size: 1.6rem; }
+.pr-info { flex: 1; }
+.pr-info strong { font-size: 0.95rem; }
+.pr-meta { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+.pr-join {
+    padding: 6px 14px; border-radius: var(--radius-sm);
+    background: var(--primary); color: #fff;
+    font-size: 0.8rem; font-weight: 700;
+}
+
+/* === Modal === */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.modal-card {
+    background: var(--bg-card); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); padding: 28px; width: 100%; max-width: 400px;
+}
+.modal-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
+.modal-body { margin-bottom: 20px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* Toggle switch */
+.toggle-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    cursor: pointer; position: relative; padding: 10px 0;
+}
+.toggle-row span:first-child { font-weight: 600; font-size: 0.95rem; }
+.toggle-hint { flex-basis: 100%; font-size: 0.8rem; color: var(--text-light); order: 3; }
+.toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+    margin-left: auto; order: 2;
+    width: 44px; height: 24px; background: var(--border); border-radius: 12px;
+    position: relative; transition: background 0.2s;
+}
+.toggle-slider::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; background: #fff; border-radius: 50%;
+    transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-input:checked + .toggle-slider { background: var(--primary); }
+.toggle-input:checked + .toggle-slider::after { transform: translateX(20px); }
+
 /* === Join Room Bar === */
 .join-room-bar {
     display: flex;

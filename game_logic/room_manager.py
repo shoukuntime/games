@@ -5,10 +5,11 @@ from fastapi import WebSocket
 
 
 class Room:
-    def __init__(self, room_id: str, game_type: str, host: str):
+    def __init__(self, room_id: str, game_type: str, host: str, is_public: bool = False):
         self.room_id = room_id
         self.game_type = game_type
         self.host = host
+        self.is_public = is_public
         self.players: list[str] = [host]
         self.connections: dict[str, WebSocket] = {}
         self.game = None
@@ -26,6 +27,7 @@ class Room:
             "min_players": info["min_players"],
             "max_players": info["max_players"],
             "status": self.status,
+            "is_public": self.is_public,
         }
 
     async def add_player(self, username: str, ws: WebSocket):
@@ -118,11 +120,18 @@ class RoomManager:
             if code not in self.rooms:
                 return code
 
-    def create_room(self, game_type: str, host: str) -> Room:
+    def create_room(self, game_type: str, host: str, is_public: bool = False) -> Room:
         room_id = self._generate_code()
-        room = Room(room_id, game_type, host)
+        room = Room(room_id, game_type, host, is_public=is_public)
         self.rooms[room_id] = room
         return room
+
+    def list_public_rooms(self) -> list[dict]:
+        result = []
+        for room in self.rooms.values():
+            if room.is_public and room.status == "waiting":
+                result.append(room.get_lobby_state())
+        return result
 
     def get_room(self, room_id: str) -> Room | None:
         return self.rooms.get(room_id)

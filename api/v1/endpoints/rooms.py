@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.deps import get_current_user
@@ -11,18 +11,20 @@ router = APIRouter(prefix="/rooms", tags=["rooms"])
 
 class CreateRoomRequest(BaseModel):
     game_type: str
-
-
-class JoinRoomRequest(BaseModel):
-    room_id: str
+    is_public: bool = False
 
 
 @router.post("/create")
 def create_room(data: CreateRoomRequest, user: User = Depends(get_current_user)):
     if data.game_type not in GAME_INFO:
         raise HTTPException(status_code=400, detail="未知的遊戲類型")
-    room = room_manager.create_room(data.game_type, user.username)
-    return {"room_id": room.room_id, "game_type": data.game_type}
+    room = room_manager.create_room(data.game_type, user.username, is_public=data.is_public)
+    return {"room_id": room.room_id, "game_type": data.game_type, "is_public": data.is_public}
+
+
+@router.get("/")
+def list_public_rooms(user: User = Depends(get_current_user)):
+    return room_manager.list_public_rooms()
 
 
 @router.get("/{room_id}")
