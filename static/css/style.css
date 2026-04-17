@@ -285,6 +285,20 @@ a:hover { text-decoration: underline; }
 .piece-item:hover { border-color: var(--primary); background: #f0f4ff; }
 .piece-item.selected { border-color: var(--primary); background: var(--primary-light); }
 
+/* Color sections in piece panel */
+.color-section { margin-bottom: 8px; border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
+.color-section.current-color { border-color: var(--primary); background: #fafbff; }
+.color-section-hdr {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-light);
+}
+.piece-count { margin-left: auto; color: var(--text-light); font-weight: 400; }
+.now-badge {
+    font-size: 0.6rem; background: var(--primary); color: #fff;
+    padding: 1px 5px; border-radius: 3px; font-weight: 700;
+}
+.color-pieces { display: flex; flex-wrap: wrap; gap: 3px; }
+
 /* Selected piece preview area */
 .piece-preview-area {
     background: var(--bg);
@@ -336,8 +350,7 @@ a:hover { text-decoration: underline; }
 .btn-icon.btn-confirm:hover { background: #d1fae5; }
 .btn-icon.btn-cancel { color: var(--danger); border-color: var(--danger); font-size: 1.4rem; width: 48px; height: 48px; }
 .btn-icon.btn-cancel:hover { background: #fee2e2; }
-.btn-icon.btn-pass { flex: 1; font-size: 1rem; height: 36px; }
-.btn-icon.btn-pass::after { content: ' 跳過'; font-size: 0.85rem; margin-left: 4px; }
+.btn-icon.btn-pass { font-size: 1.1rem; }
 
 /* Drag ghost */
 .drag-ghost {
