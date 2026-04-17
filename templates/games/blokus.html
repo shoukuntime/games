@@ -15,21 +15,27 @@
         </div>
         <div class="blokus-center">
             <div id="turnInfo" class="turn-info"></div>
-            <canvas id="boardCanvas" width="600" height="600"></canvas>
-            <div id="confirmBar" class="confirm-bar" style="display:none">
-                <button class="btn-icon btn-confirm" onclick="confirmPlace()" title="確認放置">✔</button>
-                <button class="btn-icon btn-cancel" onclick="cancelPlace()" title="取消">✘</button>
+            <div class="board-wrapper">
+                <canvas id="boardCanvas" width="600" height="600"></canvas>
+                <div id="confirmBar" class="confirm-bar" style="display:none">
+                    <button class="btn-icon btn-confirm" onclick="confirmPlace()" title="確認放置">✔</button>
+                    <button class="btn-icon btn-cancel" onclick="cancelPlace()" title="取消">✘</button>
+                </div>
             </div>
             <div id="gameMessage" class="game-message"></div>
         </div>
         <div class="blokus-sidebar right">
             <h3>你的棋子</h3>
+            <div id="piecesPanel" class="pieces-panel"></div>
+            <div id="previewArea" class="piece-preview-area">
+                <div class="preview-hint">選擇棋子</div>
+            </div>
             <div class="piece-controls">
                 <button class="btn-icon" onclick="rotatePiece()" title="旋轉">↻</button>
                 <button class="btn-icon" onclick="flipPiece()" title="翻轉">⇔</button>
+                <span class="controls-spacer"></span>
+                <button class="btn-icon btn-pass" onclick="passTurn()" title="跳過回合">⏭</button>
             </div>
-            <div id="piecesPanel" class="pieces-panel"></div>
-            <button class="btn-icon btn-pass" onclick="passTurn()" title="跳過回合">⏭</button>
         </div>
     </div>
 </main>
