@@ -121,10 +121,18 @@ function renderPairings() {
             const s1 = pair[0][0] + pair[0][1];
             const s2 = pair[1][0] + pair[1][1];
             const valid = state.valid_pairing_indices.includes(i);
-            return `<button class="btn ${valid ? 'btn-primary' : 'btn-secondary'} pair-btn"
+            return `<button class="pair-btn ${valid ? '' : 'pair-disabled'}"
                         ${valid ? '' : 'disabled'}
                         onclick="choosePair(${i})">
-                (${pair[0][0]}+${pair[0][1]}=${s1}) & (${pair[1][0]}+${pair[1][1]}=${s2})
+                <span class="pair-group">
+                    <span class="pair-dice">${dieface(pair[0][0])} ${dieface(pair[0][1])}</span>
+                    <span class="pair-sum">${s1}</span>
+                </span>
+                <span class="pair-and">&</span>
+                <span class="pair-group">
+                    <span class="pair-dice">${dieface(pair[1][0])} ${dieface(pair[1][1])}</span>
+                    <span class="pair-sum">${s2}</span>
+                </span>
             </button>`;
         }).join('');
 }
