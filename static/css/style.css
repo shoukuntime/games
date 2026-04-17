@@ -638,16 +638,162 @@ a:hover { text-decoration: underline; }
 .pair-and { font-size: 0.8rem; color: var(--text-light); font-weight: 600; }
 .cs-actions { display: flex; gap: 12px; }
 
-/* === Responsive === */
+/* === Mobile players bar (shown when sidebar hidden) === */
+.mobile-players-bar {
+    display: none; /* shown via media query */
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 6px 0;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.mobile-players-bar::-webkit-scrollbar { display: none; }
+.mp-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; background: var(--bg-card); border-radius: 16px;
+    font-size: 0.75rem; font-weight: 600; box-shadow: var(--shadow);
+    border: 2px solid transparent; white-space: nowrap;
+}
+.mp-chip.active { border-color: var(--primary); background: var(--primary-light); }
+.mp-chip.dead { opacity: 0.4; text-decoration: line-through; }
+
+/* === Responsive — Tablet ≤900px === */
 @media (max-width: 900px) {
+    /* Blokus: stack vertically, hide left sidebar */
     .blokus-layout { grid-template-columns: 1fr; }
-    .blokus-sidebar { display: none; }
-    .blokus-sidebar.right { display: block; }
+    .blokus-sidebar.left { display: none; }
+    .blokus-sidebar.right { width: 100%; }
+    .blokus-center { order: -1; }
+    #boardCanvas { max-width: 100%; height: auto; }
+
+    /* Draw & Guess: stack, move chat below */
     .dg-layout { grid-template-columns: 1fr; height: auto; }
     .dg-sidebar { display: none; }
+    .dg-chat { max-height: 250px; }
+
+    /* Can't Stop: stack */
     .cs-layout { grid-template-columns: 1fr; }
     .cs-sidebar { display: none; }
+
+    /* Liar's Dice: stack */
+    .ld-layout { grid-template-columns: 1fr; }
+    .ld-sidebar { display: none; }
+
+    /* Show mobile player bars */
+    .mobile-players-bar { display: flex; }
 }
+
+/* === Responsive — Mobile ≤640px === */
+@media (max-width: 640px) {
+    /* --- Global --- */
+    .auth-card { padding: 24px 16px; }
+    .navbar { padding: 10px 12px; }
+    .nav-brand { font-size: 1rem; }
+    .nav-right { gap: 8px; }
+    .nav-user { display: none; }
+    .lang-btn { font-size: 0.75rem; padding: 4px 8px; }
+    .main-content { padding: 16px 12px; }
+    .page-header { margin-bottom: 20px; }
+    .page-header h1 { font-size: 1.4rem; }
+    .games-grid { grid-template-columns: 1fr; gap: 12px; }
+    .game-card { padding: 20px 16px; }
+    .game-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .join-room-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .room-code-input { width: 100%; }
+    .public-rooms-list { grid-template-columns: 1fr; }
+    .pr-card { padding: 12px; }
+    .section-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+    /* --- Lobby --- */
+    .lobby-card { border-radius: var(--radius-sm); }
+    .lobby-top { padding: 20px 16px 16px; }
+    .lobby-top h1 { font-size: 1.2rem; }
+    .room-code-value { font-size: 1.3rem; letter-spacing: 3px; }
+    .lobby-players { padding: 12px 16px; }
+    .lobby-actions { padding: 12px 16px 20px; }
+    .players-list { gap: 6px; }
+    .player-chip { padding: 6px 10px; font-size: 0.82rem; }
+
+    /* --- Game pages --- */
+    .game-page { padding: 8px; }
+    .turn-info { font-size: 0.9rem; padding: 8px; }
+    .game-message { font-size: 0.9rem; }
+
+    /* --- Blokus mobile --- */
+    .blokus-layout { gap: 8px; }
+    .blokus-sidebar.right { padding: 10px; }
+    .blokus-sidebar.right h3 { font-size: 0.85rem; margin-bottom: 8px; }
+    .pieces-panel { max-height: 180px; gap: 3px; }
+    .piece-preview-area { min-height: 80px; padding: 8px; }
+    .piece-controls { gap: 4px; }
+    .piece-controls .btn-icon { width: 34px; height: 34px; font-size: 1rem; }
+    .confirm-bar { gap: 8px; }
+    .confirm-bar .btn-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+    .color-section { padding: 4px; }
+    .color-section-hdr { font-size: 0.7rem; }
+
+    /* --- Draw & Guess mobile --- */
+    .dg-layout { gap: 8px; }
+    .dg-center { gap: 6px; }
+    #drawCanvas { width: 100%; height: auto; }
+    .canvas-wrapper { width: 100%; }
+    .draw-tools { gap: 6px; flex-wrap: wrap; justify-content: center; }
+    .draw-tools input[type="range"] { width: 80px; }
+    .word-choices { gap: 6px; }
+    .word-btn { font-size: 0.95rem !important; padding: 10px 16px !important; }
+    .dg-chat { padding: 10px; max-height: 200px; }
+    .chat-messages { font-size: 0.8rem; }
+    .chat-input-group input { font-size: 0.85rem; padding: 6px 10px; }
+
+    /* --- Can't Stop mobile --- */
+    .cs-center { gap: 10px; }
+    .cs-columns { gap: 3px; }
+    .cs-column { width: 28px; }
+    .cs-cell { width: 24px; height: 18px; }
+    .cs-col-num { width: 24px; height: 24px; font-size: 0.7rem; }
+    .cs-marker { width: 12px; height: 12px; font-size: 0.5rem; }
+    .dice-group { gap: 8px; }
+    .die { width: 44px; height: 44px; }
+    .die svg { width: 44px; height: 44px; }
+    .pair-btn { min-width: 200px; padding: 8px 12px; gap: 6px; }
+    .pair-dice svg { width: 22px; height: 22px; }
+    .pair-sum { font-size: 0.85rem; padding: 2px 6px; }
+    .cs-actions { gap: 8px; }
+    .cs-actions .btn { padding: 8px 14px; font-size: 0.85rem; }
+
+    /* --- Liar's Dice mobile --- */
+    .ld-center { gap: 10px; }
+    .ld-my-dice h4 { font-size: 0.8rem; }
+    .ld-dice-row { gap: 6px; }
+    .ld-die-wrap svg { width: 42px; height: 42px; }
+    .ld-bid-card { padding: 12px 16px; }
+    .ld-bid-qty { font-size: 1.5rem; }
+    .ld-controls { padding: 14px; max-width: 100%; }
+    .ld-bid-form { gap: 14px; }
+    .ld-stepper span { font-size: 1.2rem; }
+    .ld-face-picker { gap: 4px; }
+    .ld-face-opt svg { width: 28px; height: 28px; }
+    .ld-action-btns { flex-direction: column; gap: 8px; }
+    .ld-action-btns .btn { width: 100%; }
+    .ld-reveal-card { padding: 14px; }
+    .ld-reveal-result { font-size: 0.85rem; flex-wrap: wrap; }
+}
+
+/* === Responsive — Small mobile ≤400px === */
+@media (max-width: 400px) {
+    .page-header h1 { font-size: 1.2rem; }
+    .game-card h3 { font-size: 1rem; }
+    .game-card p { font-size: 0.8rem; }
+    .cs-column { width: 24px; }
+    .cs-cell { width: 20px; height: 16px; }
+    .cs-col-num { width: 20px; height: 20px; font-size: 0.6rem; }
+    .ld-die-wrap svg { width: 36px; height: 36px; }
+    .die { width: 38px; height: 38px; }
+    .die svg { width: 38px; height: 38px; }
+}
+
 /* === Liar's Dice === */
 .ld-layout {
     display: grid; grid-template-columns: 200px 1fr;
@@ -718,17 +864,3 @@ a:hover { text-decoration: underline; }
 .ld-reveal-result.bid-fail { background: #fee2e2; color: var(--danger); }
 .ld-reveal-loser { font-size: 0.9rem; color: var(--text-light); }
 
-@media (max-width: 640px) {
-    .ld-layout { grid-template-columns: 1fr; }
-    .ld-sidebar { display: none; }
-}
-
-@media (max-width: 640px) {
-    .auth-card { padding: 28px 20px; }
-    .navbar { padding: 12px 16px; }
-    .main-content { padding: 20px 16px; }
-    .games-grid { grid-template-columns: 1fr; }
-    .cs-column { width: 36px; }
-    .cs-cell { width: 32px; height: 22px; }
-    .cs-col-num { width: 28px; height: 28px; font-size: 0.8rem; }
-}

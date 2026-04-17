@@ -176,9 +176,15 @@ function drawPlayers() {
             `<span class="color-dot${c===state.current_color?' active-dot':''}" style="background:${COLORS[c]}"></span>`
         ).join('');
         return `<div class="player-info ${i===state.current_player_idx?'active':''}">
-            <div class="player-header">${dots} <strong>${p.name}${i===state.my_index?' (你)':''}</strong></div>
+            <div class="player-header">${dots} <strong>${p.name}${i===state.my_index?` (${t('lobby.you')||'你'})`:''}</strong></div>
             <div>${p.score} ${t('blokus.score')}</div>
         </div>`;
+    }).join('');
+    // Mobile bar
+    const mb = document.getElementById('blokusMobilePlayers');
+    if (mb) mb.innerHTML = state.players.map((p, i) => {
+        const dots = p.colors.map(c => `<span style="color:${COLORS[c]}">●</span>`).join('');
+        return `<span class="mp-chip ${i===state.current_player_idx?'active':''}">${dots} ${p.name} ${p.score}</span>`;
     }).join('');
 }
 

@@ -80,6 +80,13 @@ function renderPlayers() {
         </div>`;
     }).join('');
     document.getElementById('ldTotal').innerHTML = `${t('ld.total_dice')}: <strong>${state.total_dice}</strong>`;
+    // Mobile bar
+    const mb = document.getElementById('ldMobilePlayers');
+    if (mb) mb.innerHTML = state.players.map((p, i) =>
+        `<span class="mp-chip ${i===state.current_player&&state.phase==='bidding'?'active':''} ${!p.alive?'dead':''}">
+            <span style="color:${PLAYER_COLORS[i]}">●</span> ${p.name} ×${p.dice_count}
+        </span>`
+    ).join('');
 }
 
 function renderMyDice() {

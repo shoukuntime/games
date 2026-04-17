@@ -57,6 +57,14 @@ function renderState() {
     document.getElementById('roundNum').textContent = state.round;
     document.getElementById('maxRounds').textContent = state.max_rounds;
 
+    // Mobile bar
+    const mb = document.getElementById('dgMobilePlayers');
+    if (mb) mb.innerHTML = state.players.map(p =>
+        `<span class="mp-chip ${p.name===state.current_drawer?'active':''}">
+            ${p.name===state.current_drawer?'🎨 ':''}${p.name}: ${p.score}
+        </span>`
+    ).join('');
+
     const info = document.getElementById('phaseInfo');
     const wordDiv = document.getElementById('wordChoices');
     const tools = document.getElementById('drawTools');

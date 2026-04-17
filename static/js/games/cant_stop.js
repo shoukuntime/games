@@ -47,10 +47,17 @@ function renderPlayers() {
     document.getElementById('csPlayers').innerHTML = state.players.map((p, i) => `
         <div class="player-info ${i === state.current_player ? 'active' : ''}"
              style="border-left: 4px solid ${PLAYER_COLORS[i]}">
-            <strong>${p.name}${i === state.my_index ? ' (你)' : ''}</strong>
+            <strong>${p.name}${i === state.my_index ? ` (${t('lobby.you')||'你'})` : ''}</strong>
             <div>${t('cs.columns_won', {n: p.columns_won})}</div>
         </div>
     `).join('');
+    // Mobile bar
+    const mb = document.getElementById('csMobilePlayers');
+    if (mb) mb.innerHTML = state.players.map((p, i) =>
+        `<span class="mp-chip ${i===state.current_player?'active':''}" style="border-color:${i===state.current_player?PLAYER_COLORS[i]:'transparent'}">
+            <span style="color:${PLAYER_COLORS[i]}">●</span> ${p.name} (${p.columns_won}/3)
+        </span>`
+    ).join('');
 }
 
 function renderBoard() {
