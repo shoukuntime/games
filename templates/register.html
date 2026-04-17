@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}註冊 — Games Platform{% endblock %}
+{% block body %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">🎮</div>
+            <h1>建立帳號</h1>
+            <p class="auth-subtitle">註冊後即可開始遊玩各種小遊戲</p>
+        </div>
+        <form id="registerForm" class="auth-form">
+            <div class="form-group">
+                <label for="username">帳號</label>
+                <input type="text" id="username" name="username" placeholder="至少 3 個字元" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" id="password" name="password" placeholder="至少 6 個字元" required autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">確認密碼</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="再次輸入密碼" required autocomplete="new-password">
+            </div>
+            <div id="errorMsg" class="error-msg" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary btn-full">註冊</button>
+        </form>
+        <div class="auth-footer">
+            <span>已有帳號？</span>
+            <a href="/">返回登入</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/auth.js"></script>
+{% endblock %}

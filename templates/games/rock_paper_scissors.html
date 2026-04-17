@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}剪刀石頭布 — Games Platform{% endblock %}
+{% block body %}
+<nav class="navbar">
+    <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
+    <div class="nav-right">
+        <span class="nav-user">{{ user.username }}</span>
+        <button class="btn btn-outline btn-sm" onclick="logout()">登出</button>
+    </div>
+</nav>
+<main class="main-content">
+    <div class="game-container">
+        <div class="game-header">
+            <h1>✊ 剪刀石頭布</h1>
+            <p>選擇你的出拳，挑戰電腦！</p>
+        </div>
+        <div class="game-body">
+            <div class="rps-score">
+                <div class="score-item">
+                    <span class="score-label">你</span>
+                    <span class="score-value" id="playerScore">0</span>
+                </div>
+                <div class="score-item score-divider">
+                    <span class="score-label">VS</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">電腦</span>
+                    <span class="score-value" id="computerScore">0</span>
+                </div>
+            </div>
+            <div class="rps-display">
+                <div class="rps-choice" id="playerChoice">❓</div>
+                <div class="rps-vs">VS</div>
+                <div class="rps-choice" id="computerChoice">❓</div>
+            </div>
+            <div id="rpsResult" class="game-message"></div>
+            <div class="rps-buttons">
+                <button class="btn-rps" onclick="play('scissors')">✌️<span>剪刀</span></button>
+                <button class="btn-rps" onclick="play('rock')">✊<span>石頭</span></button>
+                <button class="btn-rps" onclick="play('paper')">🖐️<span>布</span></button>
+            </div>
+            <button class="btn btn-secondary" onclick="resetGame()">重新計分</button>
+        </div>
+        <a href="/dashboard" class="back-link">← 返回遊戲大廳</a>
+    </div>
+</main>
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/games/rock_paper_scissors.js"></script>
+<script>
+async function logout() {
+    await fetch('/api/v1/auth/logout', { method: 'POST' });
+    window.location.href = '/';
+}
+</script>
+{% endblock %}

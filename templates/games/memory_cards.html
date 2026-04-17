@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}記憶翻牌 — Games Platform{% endblock %}
+{% block body %}
+<nav class="navbar">
+    <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
+    <div class="nav-right">
+        <span class="nav-user">{{ user.username }}</span>
+        <button class="btn btn-outline btn-sm" onclick="logout()">登出</button>
+    </div>
+</nav>
+<main class="main-content">
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🃏 記憶翻牌</h1>
+            <p>翻開卡片找出配對，考驗你的記憶力！</p>
+        </div>
+        <div class="game-body">
+            <div class="memory-stats">
+                <span>翻牌次數：<strong id="flipCount">0</strong></span>
+                <span>配對成功：<strong id="matchCount">0</strong> / 8</span>
+                <span>時間：<strong id="timer">00:00</strong></span>
+            </div>
+            <div class="memory-grid" id="memoryGrid"></div>
+            <div id="memoryResult" class="game-message"></div>
+            <button class="btn btn-secondary" onclick="resetGame()">重新開始</button>
+        </div>
+        <a href="/dashboard" class="back-link">← 返回遊戲大廳</a>
+    </div>
+</main>
+{% endblock %}
+{% block extra_js %}
+<script src="/static/js/games/memory_cards.js"></script>
+<script>
+async function logout() {
+    await fetch('/api/v1/auth/logout', { method: 'POST' });
+    window.location.href = '/';
+}
+</script>
+{% endblock %}
