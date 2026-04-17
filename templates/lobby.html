@@ -1,11 +1,19 @@
 {% extends "base.html" %}
-{% block title %}房間 {{ room_id }} — Games Platform{% endblock %}
+{% block title %}{{ room_id }} — Games Platform{% endblock %}
 {% block body %}
 <nav class="navbar">
     <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
     <div class="nav-right">
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
+            <div class="lang-dropdown">
+                <div onclick="setLang('zh-TW')">中文</div>
+                <div onclick="setLang('en')">English</div>
+                <div onclick="setLang('ja')">日本語</div>
+            </div>
+        </div>
         <span class="nav-user">{{ user.username }}</span>
-        <button class="btn btn-outline btn-sm" onclick="location.href='/dashboard'">離開房間</button>
+        <button class="btn btn-outline btn-sm" data-i18n="lobby.leave" onclick="location.href='/dashboard'">離開房間</button>
     </div>
 </nav>
 <main class="main-content">
@@ -13,25 +21,23 @@
         <div class="lobby-header">
             <h1>{{ game_info.name }}</h1>
             <div class="room-code-display">
-                房間代碼：<strong id="roomCode">{{ room_id }}</strong>
-                <button class="btn btn-sm btn-secondary" onclick="copyCode()">複製</button>
+                <span data-i18n="lobby.room_code">房間代碼：</span><strong id="roomCode">{{ room_id }}</strong>
+                <button class="btn btn-sm btn-secondary" id="copyBtn" data-i18n="lobby.copy" onclick="copyCode()">複製</button>
             </div>
-            <p class="lobby-hint" id="lobbyHint">將房間代碼分享給朋友加入！</p>
+            <p class="lobby-hint" id="lobbyHint"></p>
         </div>
         <div class="lobby-body">
             <div class="players-list" id="playersList"></div>
             <div class="lobby-info">
-                <span id="playerCount">1</span> / {{ game_info.max_players }} 位玩家
-                （至少 {{ game_info.min_players }} 人）
+                <span id="playerCount">1</span> / {{ game_info.max_players }} <span data-i18n="lobby.players">位玩家</span>
+                （<span data-i18n="lobby.min">至少</span> {{ game_info.min_players }}）
             </div>
             <div id="lobbyActions">
-                <button class="btn btn-primary btn-full" id="startBtn" style="display:none" onclick="startGame()">
-                    開始遊戲
-                </button>
-                <p id="waitMsg" class="lobby-hint">等待房主開始遊戲...</p>
+                <button class="btn btn-primary btn-full" id="startBtn" style="display:none" data-i18n="lobby.start" onclick="startGame()">開始遊戲</button>
+                <p id="waitMsg" class="lobby-hint" data-i18n="lobby.wait">等待房主開始遊戲...</p>
             </div>
         </div>
-        <a href="/dashboard" class="back-link">← 返回遊戲大廳</a>
+        <a href="/dashboard" class="back-link" data-i18n="lobby.back">← 返回遊戲大廳</a>
     </div>
 </main>
 {% endblock %}
@@ -39,14 +45,12 @@
 <script>
 const ROOM_ID = "{{ room_id }}";
 const USERNAME = "{{ user.username }}";
-const GAME_TYPE = "{{ game_type }}";
 const MIN_PLAYERS = {{ game_info.min_players }};
 let ws;
 
 function connect() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(`${proto}://${location.host}/ws/${ROOM_ID}`);
-
     ws.onmessage = (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === 'lobby_update') updateLobby(msg.data);
@@ -57,35 +61,24 @@ function connect() {
 }
 
 function updateLobby(data) {
-    const list = document.getElementById('playersList');
-    list.innerHTML = data.players.map(p =>
-        `<div class="player-item">${p === data.host ? '👑 ' : ''}${p}${p === USERNAME ? ' (你)' : ''}</div>`
+    document.getElementById('playersList').innerHTML = data.players.map(p =>
+        `<div class="player-item">${p===data.host?'👑 ':''}${p}${p===USERNAME?' (你)':''}</div>`
     ).join('');
     document.getElementById('playerCount').textContent = data.players.length;
-
-    const hint = document.getElementById('lobbyHint');
-    if (data.is_public) {
-        hint.innerHTML = '🌐 公開房間 — 其他玩家可在大廳加入';
-    } else {
-        hint.innerHTML = '🔒 私人房間 — 將代碼分享給朋友';
-    }
-
+    document.getElementById('lobbyHint').textContent = data.is_public ? t('lobby.public_hint') : t('lobby.private_hint');
     const isHost = (data.host === USERNAME);
-    const enough = data.players.length >= MIN_PLAYERS;
     document.getElementById('startBtn').style.display = isHost ? 'block' : 'none';
-    document.getElementById('startBtn').disabled = !enough;
+    document.getElementById('startBtn').disabled = data.players.length < MIN_PLAYERS;
     document.getElementById('waitMsg').style.display = isHost ? 'none' : 'block';
 }
 
 function startGame() { ws.send(JSON.stringify({ type: 'start_game' })); }
-
 function copyCode() {
     navigator.clipboard.writeText(ROOM_ID);
-    const btn = event.target;
-    btn.textContent = '已複製！';
-    setTimeout(() => btn.textContent = '複製', 1500);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = t('lobby.copied');
+    setTimeout(() => btn.textContent = t('lobby.copy'), 1500);
 }
-
 connect();
 </script>
 {% endblock %}

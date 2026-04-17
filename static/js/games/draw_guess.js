@@ -31,14 +31,14 @@ function handleMessage(msg) {
 
 function handleGameEvent(d) {
     if (d.event === 'correct_guess') {
-        addChat('✅', `${d.player} 猜對了！(+${d.score}分)`, 'correct');
+        addChat('✅', t('dg.correct', {name: d.player, score: d.score}), 'correct');
     } else if (d.event === 'guess') {
         addChat(d.player, d.text);
     } else if (d.event === 'round_end') {
-        addChat('📢', `答案是：${d.word}`, 'system');
+        addChat('📢', t('dg.answer_reveal', {word: d.word}), 'system');
     } else if (d.event === 'game_over') {
-        const ranking = d.ranking.map((r, i) => `${i + 1}. ${r.name}: ${r.score}分`).join('\n');
-        addChat('🏆', `遊戲結束！\n${ranking}`, 'system');
+        const ranking = d.ranking.map((r, i) => `${i + 1}. ${r.name}: ${r.score}${t('blokus.score')}`).join('\n');
+        addChat('🏆', `${t('dg.game_over')}\n${ranking}`, 'system');
     } else if (d.event === 'drawing_started') {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
@@ -66,40 +66,38 @@ function renderState() {
 
     if (state.phase === 'waiting') {
         if (state.is_drawer) {
-            info.innerHTML = '<strong>你是畫家！</strong> 點擊下方按鈕取得題目';
+            info.innerHTML = `<strong>${t('dg.you_draw')}</strong>`;
             wordDiv.style.display = 'block';
-            wordDiv.innerHTML = '<button class="btn btn-primary" onclick="requestWords()">🎲 取得題目</button>';
+            wordDiv.innerHTML = `<button class="btn btn-primary" onclick="requestWords()">${t('dg.get_words')}</button>`;
         } else {
-            info.innerHTML = `等待 <strong>${state.current_drawer}</strong> 選擇題目...`;
+            info.innerHTML = t('dg.wait_choose', {name: state.current_drawer});
         }
     } else if (state.phase === 'choosing') {
         if (state.is_drawer && state.word_choices.length > 0) {
-            info.innerHTML = '<strong>選擇一個題目：</strong>';
+            info.innerHTML = `<strong>${t('dg.choose_word')}</strong>`;
             wordDiv.style.display = 'block';
             wordDiv.innerHTML = state.word_choices.map(w =>
                 `<button class="btn btn-primary word-btn" onclick="chooseWord('${w}')">${w}</button>`
             ).join('');
         } else if (state.is_drawer) {
-            info.innerHTML = '正在生成題目...';
+            info.innerHTML = t('dg.generating');
         } else {
-            info.innerHTML = `等待 <strong>${state.current_drawer}</strong> 選擇題目...`;
+            info.innerHTML = t('dg.wait_choose', {name: state.current_drawer});
         }
     } else if (state.phase === 'drawing') {
         if (state.is_drawer) {
-            info.innerHTML = `你正在畫：<strong>${state.word}</strong>`;
+            info.innerHTML = `${t('dg.drawing')}<strong>${state.word}</strong>`;
             tools.style.display = 'flex';
         } else {
-            info.innerHTML = `<strong>${state.current_drawer}</strong> 正在畫圖 — 提示：${state.word}`;
+            info.innerHTML = `${t('dg.drawing_other', {name: state.current_drawer})}${state.word}`;
         }
         updateTimer(state.time_left);
     } else if (state.phase === 'round_end') {
-        info.innerHTML = `回合結束！答案是：<strong>${state.word || ''}</strong>`;
-        if (state.is_drawer || true) {
-            wordDiv.style.display = 'block';
-            wordDiv.innerHTML = '<button class="btn btn-primary" onclick="nextRound()">下一回合</button>';
-        }
+        info.innerHTML = `${t('dg.round_end')}<strong>${state.word || ''}</strong>`;
+        wordDiv.style.display = 'block';
+        wordDiv.innerHTML = `<button class="btn btn-primary" onclick="nextRound()">${t('dg.next_round')}</button>`;
     } else if (state.phase === 'game_over') {
-        info.innerHTML = '🏆 遊戲結束！';
+        info.innerHTML = t('dg.game_over');
     }
 
     // Redraw all strokes

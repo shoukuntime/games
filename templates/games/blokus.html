@@ -4,13 +4,17 @@
 <nav class="navbar">
     <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
     <div class="nav-right">
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
+            <div class="lang-dropdown"><div onclick="setLang('zh-TW')">中文</div><div onclick="setLang('en')">English</div><div onclick="setLang('ja')">日本語</div></div>
+        </div>
         <span class="nav-user">{{ user.username }}</span>
     </div>
 </nav>
 <main class="game-page blokus-page">
     <div class="blokus-layout">
         <div class="blokus-sidebar left">
-            <h3>玩家</h3>
+            <h3 data-i18n="blokus.players">玩家</h3>
             <div id="playersPanel"></div>
         </div>
         <div class="blokus-center">
@@ -18,24 +22,24 @@
             <div class="board-wrapper">
                 <canvas id="boardCanvas" width="600" height="600"></canvas>
                 <div id="confirmBar" class="confirm-bar" style="display:none">
-                    <button class="btn-icon btn-confirm" onclick="confirmPlace()" title="確認放置">✔</button>
-                    <button class="btn-icon btn-cancel" onclick="cancelPlace()" title="取消">✘</button>
+                    <button class="btn-icon btn-confirm" onclick="confirmPlace()" title="✔">✔</button>
+                    <button class="btn-icon btn-cancel" onclick="cancelPlace()" title="✘">✘</button>
                 </div>
             </div>
             <div id="gameMessage" class="game-message"></div>
         </div>
         <div class="blokus-sidebar right">
-            <h3>你的棋子</h3>
+            <h3 data-i18n="blokus.your_pieces">你的棋子</h3>
             <div id="piecesPanel" class="pieces-panel"></div>
             <div id="previewArea" class="piece-preview-area">
-                <div class="preview-hint">選擇棋子</div>
+                <div class="preview-hint" data-i18n="blokus.select">選擇棋子</div>
             </div>
             <div class="piece-controls">
-                <button class="btn-icon" onclick="rotatePiece()" title="旋轉 90° (R)">↻</button>
-                <button class="btn-icon" onclick="flipHorizontal()" title="左右翻轉 (F)">⇕</button>
-                <button class="btn-icon" onclick="flipVertical()" title="上下翻轉 (V)">⇔</button>
+                <button class="btn-icon" onclick="rotatePiece()" title="R">↻</button>
+                <button class="btn-icon" onclick="flipHorizontal()" title="F">⇕</button>
+                <button class="btn-icon" onclick="flipVertical()" title="V">⇔</button>
                 <span class="controls-spacer"></span>
-                <button class="btn-icon" onclick="passTurn()" title="跳過回合">⏭</button>
+                <button class="btn-icon" onclick="passTurn()" title="Skip">⏭</button>
             </div>
         </div>
     </div>

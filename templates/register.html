@@ -1,36 +1,44 @@
 {% extends "base.html" %}
-{% block title %}註冊 — Games Platform{% endblock %}
+{% block title %}Games Platform{% endblock %}
 {% block body %}
 <div class="auth-container">
     <div class="auth-card">
+        <div class="auth-lang">
+            <div class="lang-switcher">
+                <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
+                <div class="lang-dropdown">
+                    <div onclick="setLang('zh-TW')">中文</div>
+                    <div onclick="setLang('en')">English</div>
+                    <div onclick="setLang('ja')">日本語</div>
+                </div>
+            </div>
+        </div>
         <div class="auth-header">
             <div class="auth-logo">🎮</div>
-            <h1>建立帳號</h1>
-            <p class="auth-subtitle">註冊後即可開始遊玩各種小遊戲</p>
+            <h1 data-i18n="register.title">建立帳號</h1>
+            <p class="auth-subtitle" data-i18n="register.subtitle">註冊後即可開始遊玩各種小遊戲</p>
         </div>
         <form id="registerForm" class="auth-form">
             <div class="form-group">
-                <label for="username">帳號</label>
-                <input type="text" id="username" name="username" placeholder="至少 3 個字元" required autocomplete="username">
+                <label data-i18n="login.username">帳號</label>
+                <input type="text" id="username" data-i18n-ph="register.username_ph" placeholder="至少 3 個字元" required autocomplete="username">
             </div>
             <div class="form-group">
-                <label for="password">密碼</label>
-                <input type="password" id="password" name="password" placeholder="至少 6 個字元" required autocomplete="new-password">
+                <label data-i18n="login.password">密碼</label>
+                <input type="password" id="password" data-i18n-ph="register.password_ph" placeholder="至少 6 個字元" required autocomplete="new-password">
             </div>
             <div class="form-group">
-                <label for="confirmPassword">確認密碼</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="再次輸入密碼" required autocomplete="new-password">
+                <label data-i18n="register.confirm">確認密碼</label>
+                <input type="password" id="confirmPassword" data-i18n-ph="register.confirm_ph" placeholder="再次輸入密碼" required autocomplete="new-password">
             </div>
             <div id="errorMsg" class="error-msg" style="display:none;"></div>
-            <button type="submit" class="btn btn-primary btn-full">註冊</button>
+            <button type="submit" class="btn btn-primary btn-full" data-i18n="register.submit">註冊</button>
         </form>
         <div class="auth-footer">
-            <span>已有帳號？</span>
-            <a href="/">返回登入</a>
+            <span data-i18n="register.has_account">已有帳號？</span>
+            <a href="/" data-i18n="register.login_link">返回登入</a>
         </div>
     </div>
 </div>
 {% endblock %}
-{% block extra_js %}
-<script src="/static/js/auth.js"></script>
-{% endblock %}
+{% block extra_js %}<script src="/static/js/auth.js"></script>{% endblock %}

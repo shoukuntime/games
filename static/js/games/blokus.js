@@ -21,7 +21,7 @@ let dragGhost = null;
 
 const COLORS = ['#3b82f6', '#eab308', '#ef4444', '#22c55e'];
 const COLORS_LIGHT = ['#93bbfd', '#fde047', '#fca5a5', '#86efac'];
-const COLOR_NAMES = ['藍', '黃', '紅', '綠'];
+function colorName(i) { return t('blokus.color.' + i); }
 const PREVIEW_CELL = 20;
 
 // --- Transform: rotate + flip on client side ---
@@ -70,7 +70,7 @@ function handleMessage(msg) {
             document.getElementById('confirmBar').style.display = 'none';
         } else if (d.event === 'game_over') {
             const scores = d.scores.sort((a, b) => b.score - a.score);
-            showMessage(`🎉 遊戲結束！冠軍：${scores[0].name} (${scores[0].score}分)`, 'win');
+            showMessage(t('blokus.champion', {name: scores[0].name, score: scores[0].score}), 'win');
         }
     }
 }
@@ -177,7 +177,7 @@ function drawPlayers() {
         ).join('');
         return `<div class="player-info ${i===state.current_player_idx?'active':''}">
             <div class="player-header">${dots} <strong>${p.name}${i===state.my_index?' (你)':''}</strong></div>
-            <div>${p.score} 分</div>
+            <div>${p.score} ${t('blokus.score')}</div>
         </div>`;
     }).join('');
 }
@@ -195,7 +195,7 @@ function drawPiecesPanel() {
         html += `<div class="color-section ${isCurrent ? 'current-color' : ''}">
             <div class="color-section-hdr">
                 <span class="color-dot" style="background:${COLORS[ci]}"></span>
-                <span>${COLOR_NAMES[ci]}</span>
+                <span>${colorName(ci)}</span>
                 <span class="piece-count">${info.remaining.length}</span>
                 ${isCurrent ? '<span class="now-badge">NOW</span>' : ''}
             </div>
@@ -222,13 +222,13 @@ function drawPiecesPanel() {
 function drawPreviewArea() {
     const area = document.getElementById('previewArea');
     if (!selectedPiece || !state) {
-        area.innerHTML = '<div class="preview-hint">選擇棋子</div>';
+        area.innerHTML = `<div class="preview-hint">${t('blokus.select')}</div>`;
         return;
     }
     const cells = currentCells();
     const svg = cellsToSVG(cells, PREVIEW_CELL, selectedColor);
     area.innerHTML = `<div class="preview-piece" id="previewPiece">${svg}</div>
-        <div class="preview-drag-hint">拖曳至棋盤</div>`;
+        <div class="preview-drag-hint">${t('blokus.drag_hint')}</div>`;
     const el = document.getElementById('previewPiece');
     el.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e.clientX, e.clientY); });
     el.addEventListener('touchstart', e => { e.preventDefault(); startDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
@@ -398,11 +398,11 @@ function lockPlacement() {
 function confirmPlace() {
     if (!lockedCells || !selectedPiece || selectedColor === null) return;
     if (selectedColor !== curColor()) {
-        showMessage(`還沒輪到${COLOR_NAMES[selectedColor]}色`, 'lose');
+        showMessage(t('blokus.not_color', {color: colorName(selectedColor)}), 'lose');
         return;
     }
     if (!isMyTurn()) {
-        showMessage('還沒輪到你', 'lose');
+        showMessage(t('blokus.not_you'), 'lose');
         return;
     }
     ws.send(JSON.stringify({ type: 'place_piece', piece: selectedPiece, cells: lockedCells }));
@@ -423,13 +423,13 @@ function passTurn() {
 function updateTurnInfo() {
     const el = document.getElementById('turnInfo');
     if (!state) return;
-    if (state.game_over) { el.textContent = '遊戲結束'; return; }
+    if (state.game_over) { el.textContent = t('blokus.game_over'); return; }
     const ci = curColor();
     const dot = `<span class="color-dot" style="background:${COLORS[ci]}"></span>`;
     if (isMyTurn()) {
-        el.innerHTML = `${dot} <strong style="color:${COLORS[ci]}">輪到你的${COLOR_NAMES[ci]}色！</strong>`;
+        el.innerHTML = `${dot} <strong style="color:${COLORS[ci]}">${t('blokus.your_turn', {color: colorName(ci)})}</strong>`;
     } else {
-        el.innerHTML = `${dot} 等待 <strong>${state.players[state.current_player_idx].name}</strong> 的${COLOR_NAMES[ci]}色...`;
+        el.innerHTML = `${dot} ${t('blokus.wait_turn', {name: state.players[state.current_player_idx].name, color: colorName(ci)})}`;
     }
 }
 

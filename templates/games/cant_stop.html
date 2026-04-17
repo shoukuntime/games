@@ -4,13 +4,17 @@
 <nav class="navbar">
     <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
     <div class="nav-right">
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
+            <div class="lang-dropdown"><div onclick="setLang('zh-TW')">中文</div><div onclick="setLang('en')">English</div><div onclick="setLang('ja')">日本語</div></div>
+        </div>
         <span class="nav-user">{{ user.username }}</span>
     </div>
 </nav>
 <main class="game-page cantstop-page">
     <div class="cs-layout">
         <div class="cs-sidebar">
-            <h3>玩家</h3>
+            <h3 data-i18n="cs.players">玩家</h3>
             <div id="csPlayers"></div>
         </div>
         <div class="cs-center">
@@ -19,8 +23,8 @@
             <div id="csDice" class="cs-dice-area"></div>
             <div id="csPairings" class="cs-pairings" style="display:none"></div>
             <div id="csActions" class="cs-actions">
-                <button class="btn btn-primary" id="rollBtn" onclick="rollDice()">🎲 擲骰子</button>
-                <button class="btn btn-secondary" id="stopBtn" onclick="stopTurn()" style="display:none">✋ 停止</button>
+                <button class="btn btn-primary" id="rollBtn" data-i18n="cs.roll" onclick="rollDice()">🎲 擲骰子</button>
+                <button class="btn btn-secondary" id="stopBtn" data-i18n="cs.stop" onclick="stopTurn()" style="display:none">✋ 停止</button>
             </div>
             <div id="csMessage" class="game-message"></div>
         </div>

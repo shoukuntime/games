@@ -1,32 +1,40 @@
 {% extends "base.html" %}
-{% block title %}登入 — Games Platform{% endblock %}
+{% block title %}Games Platform{% endblock %}
 {% block body %}
 <div class="auth-container">
     <div class="auth-card">
+        <div class="auth-lang">
+            <div class="lang-switcher">
+                <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
+                <div class="lang-dropdown">
+                    <div onclick="setLang('zh-TW')">中文</div>
+                    <div onclick="setLang('en')">English</div>
+                    <div onclick="setLang('ja')">日本語</div>
+                </div>
+            </div>
+        </div>
         <div class="auth-header">
             <div class="auth-logo">🎮</div>
-            <h1>Games Platform</h1>
-            <p class="auth-subtitle">登入您的帳號開始遊戲</p>
+            <h1 data-i18n="login.title">Games Platform</h1>
+            <p class="auth-subtitle" data-i18n="login.subtitle">登入您的帳號開始遊戲</p>
         </div>
         <form id="loginForm" class="auth-form">
             <div class="form-group">
-                <label for="username">帳號</label>
-                <input type="text" id="username" name="username" placeholder="請輸入帳號" required autocomplete="username">
+                <label data-i18n="login.username">帳號</label>
+                <input type="text" id="username" data-i18n-ph="login.username_ph" placeholder="請輸入帳號" required autocomplete="username">
             </div>
             <div class="form-group">
-                <label for="password">密碼</label>
-                <input type="password" id="password" name="password" placeholder="請輸入密碼" required autocomplete="current-password">
+                <label data-i18n="login.password">密碼</label>
+                <input type="password" id="password" data-i18n-ph="login.password_ph" placeholder="請輸入密碼" required autocomplete="current-password">
             </div>
             <div id="errorMsg" class="error-msg" style="display:none;"></div>
-            <button type="submit" class="btn btn-primary btn-full">登入</button>
+            <button type="submit" class="btn btn-primary btn-full" data-i18n="login.submit">登入</button>
         </form>
         <div class="auth-footer">
-            <span>還沒有帳號？</span>
-            <a href="/register">立即註冊</a>
+            <span data-i18n="login.no_account">還沒有帳號？</span>
+            <a href="/register" data-i18n="login.register_link">立即註冊</a>
         </div>
     </div>
 </div>
 {% endblock %}
-{% block extra_js %}
-<script src="/static/js/auth.js"></script>
-{% endblock %}
+{% block extra_js %}<script src="/static/js/auth.js"></script>{% endblock %}

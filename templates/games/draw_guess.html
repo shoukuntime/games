@@ -1,40 +1,42 @@
 {% extends "base.html" %}
-{% block title %}你畫我猜 — Games Platform{% endblock %}
+{% block title %}Draw & Guess — Games Platform{% endblock %}
 {% block body %}
 <nav class="navbar">
     <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
     <div class="nav-right">
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
+            <div class="lang-dropdown"><div onclick="setLang('zh-TW')">中文</div><div onclick="setLang('en')">English</div><div onclick="setLang('ja')">日本語</div></div>
+        </div>
         <span class="nav-user">{{ user.username }}</span>
     </div>
 </nav>
 <main class="game-page draw-guess-page">
     <div class="dg-layout">
         <div class="dg-sidebar">
-            <h3>計分板</h3>
+            <h3 data-i18n="dg.scoreboard">計分板</h3>
             <div id="scoreBoard"></div>
             <div class="dg-round-info">
-                第 <strong id="roundNum">1</strong> / <span id="maxRounds">?</span> 回合
+                <span data-i18n="dg.round">回合</span> <strong id="roundNum">1</strong> / <span id="maxRounds">?</span>
             </div>
         </div>
         <div class="dg-center">
             <div id="phaseInfo" class="turn-info"></div>
             <div id="wordChoices" class="word-choices" style="display:none"></div>
-            <div class="canvas-wrapper">
-                <canvas id="drawCanvas" width="640" height="480"></canvas>
-            </div>
+            <div class="canvas-wrapper"><canvas id="drawCanvas" width="640" height="480"></canvas></div>
             <div id="drawTools" class="draw-tools" style="display:none">
                 <input type="color" id="penColor" value="#000000">
                 <input type="range" id="penSize" min="2" max="20" value="4">
-                <button class="btn btn-sm btn-secondary" onclick="clearCanvas()">清除</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearCanvas()">🗑</button>
             </div>
             <div id="timerBar" class="timer-bar"><div id="timerFill" class="timer-fill"></div></div>
         </div>
         <div class="dg-chat">
-            <h3>聊天 / 猜題</h3>
+            <h3 data-i18n="dg.chat">聊天 / 猜題</h3>
             <div id="chatMessages" class="chat-messages"></div>
             <div class="chat-input-group">
-                <input type="text" id="guessInput" placeholder="輸入猜測..." autocomplete="off">
-                <button class="btn btn-primary btn-sm" onclick="sendGuess()">送出</button>
+                <input type="text" id="guessInput" data-i18n-ph="dg.guess_ph" placeholder="輸入猜測..." autocomplete="off">
+                <button class="btn btn-primary btn-sm" data-i18n="dg.send" onclick="sendGuess()">送出</button>
             </div>
         </div>
     </div>

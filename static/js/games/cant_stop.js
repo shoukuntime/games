@@ -23,13 +23,13 @@ function handleMessage(msg) {
 
 function handleEvent(d) {
     if (d.event === 'busted') {
-        showMsg(`💥 ${d.player} 爆了！失去所有本回合進度`, 'lose');
+        showMsg(t('cs.busted', {name: d.player}), 'lose');
     } else if (d.event === 'player_stopped') {
-        const claimed = d.newly_claimed.length > 0
-            ? `，攻佔欄位 ${d.newly_claimed.join(', ')}！` : '';
-        showMsg(`✋ ${d.player} 選擇停止${claimed}`, 'hint-low');
+        let msg = t('cs.stopped', {name: d.player});
+        if (d.newly_claimed.length > 0) msg += t('cs.claimed', {cols: d.newly_claimed.join(', ')});
+        showMsg(msg, 'hint-low');
     } else if (d.event === 'game_over') {
-        showMsg(`🎉 ${d.winner} 獲勝！`, 'win');
+        showMsg(t('cs.winner', {name: d.winner}), 'win');
     }
 }
 
@@ -48,7 +48,7 @@ function renderPlayers() {
         <div class="player-info ${i === state.current_player ? 'active' : ''}"
              style="border-left: 4px solid ${PLAYER_COLORS[i]}">
             <strong>${p.name}${i === state.my_index ? ' (你)' : ''}</strong>
-            <div>攻佔 ${p.columns_won} / 3 欄</div>
+            <div>${t('cs.columns_won', {n: p.columns_won})}</div>
         </div>
     `).join('');
 }
@@ -116,7 +116,7 @@ function renderPairings() {
         return;
     }
     el.style.display = 'block';
-    el.innerHTML = '<p><strong>選擇配對方式：</strong></p>' +
+    el.innerHTML = `<p><strong>${t('cs.choose_pair')}</strong></p>` +
         state.pairings.map((pair, i) => {
             const s1 = pair[0][0] + pair[0][1];
             const s2 = pair[1][0] + pair[1][1];
@@ -145,27 +145,22 @@ function renderActions() {
     rollBtn.style.display = (isMe && (state.phase === 'rolling' || state.phase === 'deciding')) ? 'inline-flex' : 'none';
     stopBtn.style.display = (isMe && state.phase === 'deciding') ? 'inline-flex' : 'none';
 
-    if (state.phase === 'deciding') {
-        rollBtn.textContent = '🎲 繼續擲';
-    } else {
-        rollBtn.textContent = '🎲 擲骰子';
-    }
+    rollBtn.textContent = state.phase === 'deciding' ? t('cs.continue') : t('cs.roll');
+    stopBtn.textContent = t('cs.stop');
 }
 
 function renderTurnInfo() {
     const el = document.getElementById('csTurnInfo');
     if (state.winner) {
-        el.innerHTML = `🎉 <strong>${state.winner}</strong> 獲勝！`;
+        el.innerHTML = t('cs.winner', {name: state.winner});
     } else if (state.my_index === state.current_player) {
         const phases = {
-            rolling: '輪到你了！擲骰子吧',
-            choosing: '選擇配對方式',
-            deciding: '繼續擲還是停止？',
-            busted: '💥 爆了！進度全失',
+            rolling: t('cs.your_turn'), choosing: t('cs.choosing'),
+            deciding: t('cs.deciding'), busted: t('cs.busted_msg'),
         };
         el.innerHTML = `<strong style="color:${PLAYER_COLORS[state.my_index]}">${phases[state.phase] || ''}</strong>`;
     } else {
-        el.innerHTML = `等待 <strong>${state.current_player_name}</strong> 操作...`;
+        el.innerHTML = t('cs.wait', {name: state.current_player_name});
     }
 }
 
