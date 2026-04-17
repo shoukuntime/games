@@ -246,10 +246,10 @@ function flipPiece() {
 
 function afterOrientationChange() {
     if (lockedCells && lockedAnchor) {
+        // Recalculate cells from anchor with new orientation
         const oris = state.piece_orientations[selectedPiece];
         const ori = oris[currentOrientation % oris.length];
         lockedCells = ori.map(([r, c]) => [r + lockedAnchor[0], c + lockedAnchor[1]]);
-        // If new orientation is invalid, unlock
         if (!isValidPlacement(lockedCells)) {
             lockedCells = null; lockedAnchor = null;
             document.getElementById('confirmBar').style.display = 'none';
@@ -260,6 +260,16 @@ function afterOrientationChange() {
     drawBoard();
 }
 
+function pieceOffset() {
+    // Center piece on mouse position instead of top-left
+    if (!selectedPiece || !state) return [0, 0];
+    const oris = state.piece_orientations[selectedPiece];
+    const ori = oris[currentOrientation % oris.length];
+    const maxR = Math.max(...ori.map(c => c[0]));
+    const maxC = Math.max(...ori.map(c => c[1]));
+    return [Math.floor(maxR / 2), Math.floor(maxC / 2)];
+}
+
 function updateHoverPreview() {
     if (!selectedPiece || !mouseCell || !state || lockedCells) {
         if (!lockedCells) previewCells = [];
@@ -267,7 +277,8 @@ function updateHoverPreview() {
     }
     const oris = state.piece_orientations[selectedPiece];
     const ori = oris[currentOrientation % oris.length];
-    previewCells = ori.map(([r, c]) => [r + mouseCell[0], c + mouseCell[1]]);
+    const [offR, offC] = pieceOffset();
+    previewCells = ori.map(([r, c]) => [r + mouseCell[0] - offR, c + mouseCell[1] - offC]);
 }
 
 // --- Drag ---
@@ -363,7 +374,13 @@ canvas.addEventListener('click', () => {
 function lockPlacement() {
     if (!isMyTurn() || !selectedPiece || previewCells.length === 0) return;
     lockedCells = [...previewCells];
-    lockedAnchor = mouseCell ? [...mouseCell] : null;
+    // Store the offset-adjusted anchor for rotation/flip recalculation
+    if (mouseCell) {
+        const [offR, offC] = pieceOffset();
+        lockedAnchor = [mouseCell[0] - offR, mouseCell[1] - offC];
+    } else {
+        lockedAnchor = null;
+    }
     document.getElementById('confirmBar').style.display = 'flex';
     drawBoard();
 }
