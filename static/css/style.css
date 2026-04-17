@@ -648,6 +648,81 @@ a:hover { text-decoration: underline; }
     .cs-layout { grid-template-columns: 1fr; }
     .cs-sidebar { display: none; }
 }
+/* === Liar's Dice === */
+.ld-layout {
+    display: grid; grid-template-columns: 200px 1fr;
+    gap: 16px; max-width: 800px; margin: 0 auto;
+}
+.ld-sidebar { background: var(--bg-card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.ld-sidebar h3 { font-size: 0.95rem; margin-bottom: 12px; }
+.ld-total { margin-top: 12px; font-size: 0.85rem; color: var(--text-light); text-align: center; padding-top: 8px; border-top: 1px solid var(--border); }
+.ld-center { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.player-info.dead { opacity: 0.4; text-decoration: line-through; }
+.ld-dice-icons { display: flex; gap: 2px; margin-top: 4px; }
+
+.ld-my-dice { text-align: center; }
+.ld-my-dice h4 { font-size: 0.9rem; color: var(--text-light); margin-bottom: 8px; }
+.ld-dice-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.ld-die-wrap { transition: transform 0.15s; }
+.ld-die-wrap:hover { transform: scale(1.1); }
+.ld-die-wrap.highlight { background: #fef3c7; border-radius: 8px; padding: 2px; box-shadow: 0 0 0 2px #f59e0b; }
+.ld-eliminated { color: var(--text-light); font-size: 0.9rem; }
+
+/* Bid display */
+.ld-bid-display { display: flex; justify-content: center; }
+.ld-bid-card {
+    background: var(--bg-card); border: 2px solid var(--primary);
+    border-radius: var(--radius); padding: 16px 24px; text-align: center;
+    box-shadow: var(--shadow);
+}
+.ld-bid-label { font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.ld-bid-value { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0; }
+.ld-bid-qty { font-size: 2rem; font-weight: 800; color: var(--primary); }
+.ld-bid-x { font-size: 1.2rem; color: var(--text-light); }
+.ld-bid-by { font-size: 0.8rem; color: var(--text-light); }
+
+/* Bid controls */
+.ld-controls {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow); width: 100%; max-width: 400px;
+}
+.ld-bid-form { display: flex; gap: 20px; justify-content: center; margin-bottom: 16px; }
+.ld-bid-field { text-align: center; }
+.ld-bid-field label { font-size: 0.8rem; font-weight: 600; color: var(--text-light); display: block; margin-bottom: 6px; }
+.ld-stepper { display: flex; align-items: center; gap: 8px; }
+.ld-stepper span { font-size: 1.5rem; font-weight: 800; min-width: 36px; text-align: center; }
+.ld-stepper .btn-icon { width: 32px; height: 32px; font-size: 1.2rem; }
+.ld-face-picker { display: flex; gap: 6px; }
+.ld-face-opt { cursor: pointer; border-radius: 6px; padding: 3px; border: 2px solid transparent; transition: border-color 0.15s; }
+.ld-face-opt:hover { border-color: var(--primary-light); }
+.ld-face-opt.selected { border-color: var(--primary); background: var(--primary-light); }
+.ld-action-btns { display: flex; gap: 10px; justify-content: center; }
+.btn-danger { background: var(--danger); color: #fff; border: 2px solid transparent; }
+.btn-danger:hover { background: #dc2626; }
+
+/* Reveal */
+.ld-reveal { width: 100%; max-width: 500px; }
+.ld-reveal-card {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow-lg); text-align: center;
+    display: flex; flex-direction: column; gap: 12px;
+}
+.ld-reveal-header { font-size: 1.2rem; font-weight: 800; }
+.ld-reveal-player { margin-bottom: 6px; }
+.ld-reveal-player strong { font-size: 0.85rem; }
+.ld-reveal-result {
+    font-size: 1rem; font-weight: 700; padding: 10px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.ld-reveal-result.bid-success { background: #d1fae5; color: var(--success); }
+.ld-reveal-result.bid-fail { background: #fee2e2; color: var(--danger); }
+.ld-reveal-loser { font-size: 0.9rem; color: var(--text-light); }
+
+@media (max-width: 640px) {
+    .ld-layout { grid-template-columns: 1fr; }
+    .ld-sidebar { display: none; }
+}
+
 @media (max-width: 640px) {
     .auth-card { padding: 28px 20px; }
     .navbar { padding: 12px 16px; }

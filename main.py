@@ -80,6 +80,13 @@ def cant_stop_page(request: Request, room_id: str, user=Depends(get_current_user
     })
 
 
+@app.get("/games/liars-dice/{room_id}")
+def liars_dice_page(request: Request, room_id: str, user=Depends(get_current_user)):
+    return templates.TemplateResponse("games/liars_dice.html", {
+        "request": request, "user": user, "room_id": room_id,
+    })
+
+
 # --- WebSocket ---
 
 @app.websocket("/ws/{room_id}")

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Liar's Dice — Games Platform{% endblock %}
+{% block body %}
+<nav class="navbar">
+    <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
+    <div class="nav-right">
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
+            <div class="lang-dropdown"><div onclick="setLang('zh-TW')">中文</div><div onclick="setLang('en')">English</div><div onclick="setLang('ja')">日本語</div></div>
+        </div>
+        <span class="nav-user">{{ user.username }}</span>
+    </div>
+</nav>
+<main class="game-page ld-page">
+    <div class="ld-layout">
+        <div class="ld-sidebar">
+            <h3 data-i18n="ld.players">玩家</h3>
+            <div id="ldPlayers"></div>
+            <div class="ld-total" id="ldTotal"></div>
+        </div>
+        <div class="ld-center">
+            <div id="ldTurnInfo" class="turn-info"></div>
+            <!-- My dice -->
+            <div class="ld-my-dice">
+                <h4 data-i18n="ld.your_dice">你的骰子</h4>
+                <div id="ldMyDice" class="ld-dice-row"></div>
+            </div>
+            <!-- Current bid display -->
+            <div id="ldBidDisplay" class="ld-bid-display" style="display:none"></div>
+            <!-- Bid controls -->
+            <div id="ldControls" class="ld-controls" style="display:none">
+                <div class="ld-bid-form">
+                    <div class="ld-bid-field">
+                        <label data-i18n="ld.quantity">數量</label>
+                        <div class="ld-stepper">
+                            <button class="btn-icon" onclick="adjustQty(-1)">−</button>
+                            <span id="bidQty">1</span>
+                            <button class="btn-icon" onclick="adjustQty(1)">+</button>
+                        </div>
+                    </div>
+                    <div class="ld-bid-field">
+                        <label data-i18n="ld.face_value">點數</label>
+                        <div class="ld-face-picker" id="facePicker"></div>
+                    </div>
+                </div>
+                <div class="ld-action-btns">
+                    <button class="btn btn-primary" id="bidBtn" onclick="makeBid()" data-i18n="ld.bid">喊注</button>
+                    <button class="btn btn-danger" id="challengeBtn" onclick="challenge()" style="display:none" data-i18n="ld.challenge">開！質疑</button>
+                </div>
+            </div>
+            <!-- Reveal -->
+            <div id="ldReveal" class="ld-reveal" style="display:none"></div>
+            <div id="ldMessage" class="game-message"></div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+{% block extra_js %}
+<script>const ROOM_ID = "{{ room_id }}"; const USERNAME = "{{ user.username }}";</script>
+<script src="/static/js/games/liars_dice.js"></script>
+{% endblock %}
