@@ -18,22 +18,41 @@
 </nav>
 <main class="main-content">
     <div class="lobby-container">
-        <div class="lobby-header">
-            <h1>{{ game_info.name }}</h1>
-            <div class="room-code-display">
-                <span data-i18n="lobby.room_code">房間代碼：</span><strong id="roomCode">{{ room_id }}</strong>
-                <button class="btn btn-sm btn-secondary" id="copyBtn" data-i18n="lobby.copy" onclick="copyCode()">複製</button>
+        <div class="lobby-card">
+            <div class="lobby-top">
+                <div class="lobby-game-icon" id="lobbyIcon">🎮</div>
+                <h1 id="lobbyGameName">{{ game_info.name }}</h1>
+                <div class="room-code-box">
+                    <span class="room-code-label" data-i18n="lobby.room_code">房間代碼：</span>
+                    <span class="room-code-value" id="roomCode">{{ room_id }}</span>
+                    <button class="room-code-copy" id="copyBtn" onclick="copyCode()" data-i18n-title="lobby.copy" title="複製">📋</button>
+                </div>
             </div>
-            <p class="lobby-hint" id="lobbyHint"></p>
-        </div>
-        <div class="lobby-body">
-            <div class="players-list" id="playersList"></div>
-            <div class="lobby-info">
-                <span id="playerCount">1</span> / {{ game_info.max_players }} <span data-i18n="lobby.players">位玩家</span>
-                （<span data-i18n="lobby.min">至少</span> {{ game_info.min_players }}）
+
+            <div class="lobby-divider"></div>
+
+            <!-- Room settings (host only) -->
+            <div id="roomSettings" class="room-settings" style="display:none">
+                <label class="setting-toggle" onclick="togglePublic()">
+                    <span id="visIcon" class="vis-icon">🌐</span>
+                    <span class="setting-text">
+                        <span id="visLabel" data-i18n="modal.public">公開房間</span>
+                        <span id="visHint" class="setting-hint" data-i18n="modal.public_hint">其他玩家可在大廳看到並加入</span>
+                    </span>
+                    <span id="visToggle" class="vis-toggle on">ON</span>
+                </label>
             </div>
-            <div id="lobbyActions">
-                <button class="btn btn-primary btn-full" id="startBtn" style="display:none" data-i18n="lobby.start" onclick="startGame()">開始遊戲</button>
+
+            <div class="lobby-players">
+                <div class="lobby-players-header">
+                    <span id="playerCount">1</span> / {{ game_info.max_players }} <span data-i18n="lobby.players">位玩家</span>
+                    <span class="lobby-min">(<span data-i18n="lobby.min">至少</span> {{ game_info.min_players }})</span>
+                </div>
+                <div class="players-list" id="playersList"></div>
+            </div>
+
+            <div id="lobbyActions" class="lobby-actions">
+                <button class="btn btn-primary btn-full btn-lg" id="startBtn" style="display:none" data-i18n="lobby.start" onclick="startGame()">開始遊戲</button>
                 <p id="waitMsg" class="lobby-hint" data-i18n="lobby.wait">等待房主開始遊戲...</p>
             </div>
         </div>
@@ -45,8 +64,12 @@
 <script>
 const ROOM_ID = "{{ room_id }}";
 const USERNAME = "{{ user.username }}";
+const GAME_TYPE = "{{ game_type }}";
 const MIN_PLAYERS = {{ game_info.min_players }};
-let ws;
+const GAME_ICONS = { blokus:'🟦', 'draw-guess':'🎨', 'cant-stop':'🎲' };
+let ws, isPublic = true;
+
+document.getElementById('lobbyIcon').textContent = GAME_ICONS[GAME_TYPE] || '🎮';
 
 function connect() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -61,23 +84,53 @@ function connect() {
 }
 
 function updateLobby(data) {
-    document.getElementById('playersList').innerHTML = data.players.map(p =>
-        `<div class="player-item">${p===data.host?'👑 ':''}${p}${p===USERNAME?' (你)':''}</div>`
+    document.getElementById('playersList').innerHTML = data.players.map((p, i) =>
+        `<div class="player-chip">
+            <span class="player-avatar">${p === data.host ? '👑' : '🎮'}</span>
+            <span>${p}${p === USERNAME ? ` (${t('lobby.you') || '你'})` : ''}</span>
+        </div>`
     ).join('');
     document.getElementById('playerCount').textContent = data.players.length;
-    document.getElementById('lobbyHint').textContent = data.is_public ? t('lobby.public_hint') : t('lobby.private_hint');
+    isPublic = data.is_public;
+    updateVisUI();
+
     const isHost = (data.host === USERNAME);
+    document.getElementById('roomSettings').style.display = isHost ? 'block' : 'none';
     document.getElementById('startBtn').style.display = isHost ? 'block' : 'none';
     document.getElementById('startBtn').disabled = data.players.length < MIN_PLAYERS;
     document.getElementById('waitMsg').style.display = isHost ? 'none' : 'block';
+}
+
+function updateVisUI() {
+    const icon = document.getElementById('visIcon');
+    const label = document.getElementById('visLabel');
+    const hint = document.getElementById('visHint');
+    const tog = document.getElementById('visToggle');
+    if (isPublic) {
+        icon.textContent = '🌐';
+        label.textContent = t('modal.public');
+        hint.textContent = t('modal.public_hint');
+        tog.textContent = 'ON'; tog.className = 'vis-toggle on';
+    } else {
+        icon.textContent = '🔒';
+        label.textContent = t('lobby.private_label') || '私人房間';
+        hint.textContent = t('lobby.private_hint');
+        tog.textContent = 'OFF'; tog.className = 'vis-toggle off';
+    }
+}
+
+function togglePublic() {
+    isPublic = !isPublic;
+    updateVisUI();
+    ws.send(JSON.stringify({ type: 'set_public', is_public: isPublic }));
 }
 
 function startGame() { ws.send(JSON.stringify({ type: 'start_game' })); }
 function copyCode() {
     navigator.clipboard.writeText(ROOM_ID);
     const btn = document.getElementById('copyBtn');
-    btn.textContent = t('lobby.copied');
-    setTimeout(() => btn.textContent = t('lobby.copy'), 1500);
+    btn.textContent = '✅';
+    setTimeout(() => btn.textContent = '📋', 1500);
 }
 connect();
 </script>

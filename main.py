@@ -111,6 +111,12 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             data = await websocket.receive_json()
             msg_type = data.get("type")
 
+            if msg_type == "set_public":
+                if username == room.host:
+                    room.is_public = data.get("is_public", True)
+                    await room.broadcast({"type": "lobby_update", "data": room.get_lobby_state()})
+                continue
+
             if msg_type == "start_game":
                 if username != room.host:
                     await room.send_to(username, {"type": "error", "message": "只有房主可以開始遊戲"})

@@ -27,7 +27,7 @@
     </div>
     <div id="joinError" class="error-msg" style="display:none;max-width:400px;margin:0 auto 24px;"></div>
     <div class="games-grid">
-        <div class="game-card" onclick="showCreateModal('blokus')">
+        <div class="game-card" onclick="createRoom('blokus')">
             <div class="game-icon">🟦</div>
             <h3 data-i18n="game.blokus">Blokus</h3>
             <p data-i18n="game.blokus.desc">在 20×20 棋盤上放置多形方塊</p>
@@ -36,7 +36,7 @@
                 <span class="game-players">2-4 <span data-i18n="game.players">人</span></span>
             </div>
         </div>
-        <div class="game-card" onclick="showCreateModal('draw-guess')">
+        <div class="game-card" onclick="createRoom('draw-guess')">
             <div class="game-icon">🎨</div>
             <h3 data-i18n="game.draw_guess">你畫我猜</h3>
             <p data-i18n="game.draw_guess.desc">一人畫圖其他人猜</p>
@@ -45,7 +45,7 @@
                 <span class="game-players">2-8 <span data-i18n="game.players">人</span></span>
             </div>
         </div>
-        <div class="game-card" onclick="showCreateModal('cant-stop')">
+        <div class="game-card" onclick="createRoom('cant-stop')">
             <div class="game-icon">🎲</div>
             <h3 data-i18n="game.cant_stop">Can't Stop</h3>
             <p data-i18n="game.cant_stop.desc">擲骰攻頂的冒險之旅</p>
@@ -63,71 +63,53 @@
         <div id="publicRooms" class="public-rooms-list"><p class="empty-hint" data-i18n="dash.loading">載入中...</p></div>
     </div>
 </main>
-<div id="createModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
-    <div class="modal-card">
-        <h3 id="modalTitle">建立房間</h3>
-        <div class="modal-body">
-            <label class="toggle-row">
-                <span data-i18n="modal.public">公開房間</span>
-                <span class="toggle-hint" data-i18n="modal.public_hint">其他玩家可在大廳看到並加入</span>
-                <input type="checkbox" id="isPublic" class="toggle-input">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" data-i18n="modal.cancel" onclick="closeModal()">取消</button>
-            <button class="btn btn-primary" data-i18n="modal.create" onclick="confirmCreate()">建立</button>
-        </div>
-    </div>
-</div>
 {% endblock %}
 {% block extra_js %}
 <script>
-const GAME_KEYS = { blokus:'game.blokus', 'draw-guess':'game.draw_guess', 'cant-stop':'game.cant_stop' };
 const GAME_ICONS = { blokus:'🟦', 'draw-guess':'🎨', 'cant-stop':'🎲' };
-let pendingGameType = null;
 
 async function logout() { await fetch('/api/v1/auth/logout',{method:'POST'}); window.location.href='/'; }
 
-function showCreateModal(gt) {
-    pendingGameType = gt;
-    document.getElementById('modalTitle').textContent = `${t('modal.title_prefix')} ${t(GAME_KEYS[gt])} ${t('modal.title_suffix')}`;
-    document.getElementById('isPublic').checked = false;
-    document.getElementById('createModal').style.display = 'flex';
-}
-function closeModal() { document.getElementById('createModal').style.display='none'; }
-
-async function confirmCreate() {
-    if(!pendingGameType)return;
-    const res = await fetch('/api/v1/rooms/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_type:pendingGameType,is_public:document.getElementById('isPublic').checked})});
+async function createRoom(gt) {
+    const res = await fetch('/api/v1/rooms/create', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ game_type: gt, is_public: true }),
+    });
     const data = await res.json();
-    if(res.ok) window.location.href=`/rooms/${data.room_id}`;
+    if (res.ok) window.location.href = `/rooms/${data.room_id}`;
 }
 
 async function joinRoom() {
-    const code=document.getElementById('joinRoomCode').value.trim().toUpperCase();
-    const err=document.getElementById('joinError'); err.style.display='none';
-    if(!code)return;
-    const res=await fetch(`/api/v1/rooms/${code}`);
-    if(res.ok){window.location.href=`/rooms/${code}`;}
-    else{err.textContent=t('dash.join_err');err.style.display='block';}
+    const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+    const err = document.getElementById('joinError'); err.style.display='none';
+    if (!code) return;
+    const res = await fetch(`/api/v1/rooms/${code}`);
+    if (res.ok) { window.location.href = `/rooms/${code}`; }
+    else { err.textContent = t('dash.join_err'); err.style.display = 'block'; }
 }
-document.getElementById('joinRoomCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom();});
+document.getElementById('joinRoomCode').addEventListener('keydown', e => { if (e.key==='Enter') joinRoom(); });
 
 async function loadPublicRooms() {
-    const el=document.getElementById('publicRooms');
-    try{
-        const res=await fetch('/api/v1/rooms/');
-        const rooms=await res.json();
-        if(!rooms.length){el.innerHTML=`<p class="empty-hint">${t('dash.no_rooms')}</p>`;return;}
-        el.innerHTML=rooms.map(r=>`
-            <div class="public-room-card" onclick="location.href='/rooms/${r.room_id}'">
-                <div class="pr-icon">${GAME_ICONS[r.game_type]||'🎮'}</div>
-                <div class="pr-info"><strong>${r.game_name}</strong><div class="pr-meta">👑 ${r.host} ・ ${r.players.length}/${r.max_players} ${t('game.players')}</div></div>
-                <div class="pr-join">${t('dash.join')}</div>
-            </div>`).join('');
-    }catch{el.innerHTML=`<p class="empty-hint">${t('dash.load_fail')}</p>`;}
+    const el = document.getElementById('publicRooms');
+    try {
+        const res = await fetch('/api/v1/rooms/');
+        const rooms = await res.json();
+        if (!rooms.length) { el.innerHTML = `<p class="empty-hint">${t('dash.no_rooms')}</p>`; return; }
+        el.innerHTML = rooms.map(r => {
+            const pct = Math.round(r.players.length / r.max_players * 100);
+            return `<div class="pr-card" onclick="location.href='/rooms/${r.room_id}'">
+                <div class="pr-icon">${GAME_ICONS[r.game_type] || '🎮'}</div>
+                <div class="pr-body">
+                    <div class="pr-title">${r.game_name}</div>
+                    <div class="pr-meta">👑 ${r.host}</div>
+                    <div class="pr-bar"><div class="pr-bar-fill" style="width:${pct}%"></div></div>
+                    <div class="pr-slots">${r.players.length} / ${r.max_players}</div>
+                </div>
+                <div class="pr-join-btn">${t('dash.join')}</div>
+            </div>`;
+        }).join('');
+    } catch { el.innerHTML = `<p class="empty-hint">${t('dash.load_fail')}</p>`; }
 }
-loadPublicRooms(); setInterval(loadPublicRooms,5000);
+loadPublicRooms(); setInterval(loadPublicRooms, 5000);
 </script>
 {% endblock %}
