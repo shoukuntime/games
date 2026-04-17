@@ -68,7 +68,7 @@ class BlokusGame:
         if self.num_players == 2:
             self.color_owner = [0, 1, 0, 1]  # P0: blue+red, P1: yellow+green
         elif self.num_players == 3:
-            self.color_owner = [0, 1, 2, 0]  # P0 gets extra
+            self.color_owner = [0, 1, 2, 0]  # rotate: P0→P1→P2→P0
         else:
             self.color_owner = [0, 1, 2, 3]
 

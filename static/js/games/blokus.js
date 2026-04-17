@@ -284,19 +284,30 @@ function startDrag(x, y) {
 
 function positionGhost(x, y) {
     if (!dragGhost) return;
-    dragGhost.style.left = x + 'px';
-    dragGhost.style.top = y + 'px';
+    const w = dragGhost.offsetWidth || 50;
+    const h = dragGhost.offsetHeight || 50;
+    dragGhost.style.left = (x - w / 2) + 'px';
+    dragGhost.style.top = (y - h / 2) + 'px';
+}
+
+function canvasCellFromPoint(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return null;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const c = Math.floor((x - rect.left) * scaleX / CELL);
+    const r = Math.floor((y - rect.top) * scaleY / CELL);
+    if (r >= 0 && r < BOARD && c >= 0 && c < BOARD) return [r, c];
+    return null;
 }
 
 function endDrag(x, y) {
     isDragging = false;
     canvas.classList.remove('drop-target');
     if (dragGhost) { dragGhost.remove(); dragGhost = null; }
-    const rect = canvas.getBoundingClientRect();
-    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-        const c = Math.floor((x - rect.left) / CELL);
-        const r = Math.floor((y - rect.top) / CELL);
-        mouseCell = [r, c];
+    const cell = canvasCellFromPoint(x, y);
+    if (cell) {
+        mouseCell = cell;
         updateHoverPreview();
         if (previewCells.length > 0 && isValidPlacement(previewCells)) lockPlacement();
     }
@@ -309,9 +320,9 @@ document.addEventListener('mousemove', e => {
         positionGhost(e.clientX, e.clientY);
         updateBoardFromPointer(e.clientX, e.clientY);
     } else if (!lockedCells && selectedPiece && isMyTurn()) {
-        const rect = canvas.getBoundingClientRect();
-        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-            mouseCell = [Math.floor((e.clientY - rect.top) / CELL), Math.floor((e.clientX - rect.left) / CELL)];
+        const cell = canvasCellFromPoint(e.clientX, e.clientY);
+        if (cell) {
+            mouseCell = cell;
             updateHoverPreview();
             drawBoard();
         }
@@ -330,9 +341,9 @@ document.addEventListener('touchend', e => {
 });
 
 function updateBoardFromPointer(x, y) {
-    const rect = canvas.getBoundingClientRect();
-    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-        mouseCell = [Math.floor((y - rect.top) / CELL), Math.floor((x - rect.left) / CELL)];
+    const cell = canvasCellFromPoint(x, y);
+    if (cell) {
+        mouseCell = cell;
         updateHoverPreview();
         drawBoard();
     } else { previewCells = []; drawBoard(); }
