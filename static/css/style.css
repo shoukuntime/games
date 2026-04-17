@@ -102,6 +102,13 @@ a:hover { text-decoration: underline; }
     font-size: 0.85rem;
     border: 1px solid #fecaca;
 }
+.remember-row {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 0.85rem; color: var(--text-light); user-select: none;
+}
+.remember-row input[type="checkbox"] {
+    width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;
+}
 .auth-footer { text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-light); }
 .auth-footer a { font-weight: 600; margin-left: 4px; }
 
