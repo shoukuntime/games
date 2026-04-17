@@ -11,27 +11,44 @@
 <main class="main-content">
     <div class="page-header">
         <h1>遊戲大廳</h1>
-        <p>選擇一款遊戲開始挑戰吧！</p>
+        <p>選擇一款遊戲，邀請朋友一起挑戰！</p>
     </div>
+
+    <!-- Join Room -->
+    <div class="join-room-bar">
+        <input type="text" id="joinRoomCode" placeholder="輸入房間代碼" maxlength="6" class="room-code-input">
+        <button class="btn btn-primary" onclick="joinRoom()">加入房間</button>
+    </div>
+    <div id="joinError" class="error-msg" style="display:none;max-width:400px;margin:0 auto 24px;"></div>
+
     <div class="games-grid">
-        <a href="/games/guess-number" class="game-card">
-            <div class="game-icon">🔢</div>
-            <h3>猜數字</h3>
-            <p>猜猜看 1~100 之間的神秘數字，看看你幾次能猜中！</p>
-            <span class="game-tag">益智</span>
-        </a>
-        <a href="/games/rock-paper-scissors" class="game-card">
-            <div class="game-icon">✊</div>
-            <h3>剪刀石頭布</h3>
-            <p>經典對決！挑戰電腦，看誰才是最後的贏家！</p>
-            <span class="game-tag">對戰</span>
-        </a>
-        <a href="/games/memory-cards" class="game-card">
-            <div class="game-icon">🃏</div>
-            <h3>記憶翻牌</h3>
-            <p>翻開卡片找出配對，考驗你的記憶力！</p>
-            <span class="game-tag">記憶</span>
-        </a>
+        <div class="game-card" onclick="createRoom('blokus')">
+            <div class="game-icon">🟦</div>
+            <h3>Blokus</h3>
+            <p>在 20×20 棋盤上放置多形方塊，角對角連接搶佔領地！</p>
+            <div class="game-meta">
+                <span class="game-tag">策略</span>
+                <span class="game-players">2-4 人</span>
+            </div>
+        </div>
+        <div class="game-card" onclick="createRoom('draw-guess')">
+            <div class="game-icon">🎨</div>
+            <h3>你畫我猜</h3>
+            <p>一人畫圖其他人猜，LLM 出題讓每局都是全新挑戰！</p>
+            <div class="game-meta">
+                <span class="game-tag">創意</span>
+                <span class="game-players">2-8 人</span>
+            </div>
+        </div>
+        <div class="game-card" onclick="createRoom('cant-stop')">
+            <div class="game-icon">🎲</div>
+            <h3>Can't Stop</h3>
+            <p>擲骰攻頂的冒險之旅，貪心就會前功盡棄！</p>
+            <div class="game-meta">
+                <span class="game-tag">骰子策略</span>
+                <span class="game-players">2-4 人</span>
+            </div>
+        </div>
     </div>
 </main>
 {% endblock %}
@@ -41,5 +58,35 @@ async function logout() {
     await fetch('/api/v1/auth/logout', { method: 'POST' });
     window.location.href = '/';
 }
+
+async function createRoom(gameType) {
+    const res = await fetch('/api/v1/rooms/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_type: gameType }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+        window.location.href = `/rooms/${data.room_id}`;
+    }
+}
+
+async function joinRoom() {
+    const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+    const errEl = document.getElementById('joinError');
+    errEl.style.display = 'none';
+    if (!code) return;
+    const res = await fetch(`/api/v1/rooms/${code}`);
+    if (res.ok) {
+        window.location.href = `/rooms/${code}`;
+    } else {
+        errEl.textContent = '房間不存在，請確認代碼';
+        errEl.style.display = 'block';
+    }
+}
+
+document.getElementById('joinRoomCode').addEventListener('keydown', e => {
+    if (e.key === 'Enter') joinRoom();
+});
 </script>
 {% endblock %}

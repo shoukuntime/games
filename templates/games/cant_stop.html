@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Can't Stop — Games Platform{% endblock %}
+{% block body %}
+<nav class="navbar">
+    <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
+    <div class="nav-right">
+        <span class="nav-user">{{ user.username }}</span>
+    </div>
+</nav>
+<main class="game-page cantstop-page">
+    <div class="cs-layout">
+        <div class="cs-sidebar">
+            <h3>玩家</h3>
+            <div id="csPlayers"></div>
+        </div>
+        <div class="cs-center">
+            <div id="csTurnInfo" class="turn-info"></div>
+            <div id="csBoard" class="cs-board"></div>
+            <div id="csDice" class="cs-dice-area"></div>
+            <div id="csPairings" class="cs-pairings" style="display:none"></div>
+            <div id="csActions" class="cs-actions">
+                <button class="btn btn-primary" id="rollBtn" onclick="rollDice()">🎲 擲骰子</button>
+                <button class="btn btn-secondary" id="stopBtn" onclick="stopTurn()" style="display:none">✋ 停止</button>
+            </div>
+            <div id="csMessage" class="game-message"></div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+{% block extra_js %}
+<script>const ROOM_ID = "{{ room_id }}"; const USERNAME = "{{ user.username }}";</script>
+<script src="/static/js/games/cant_stop.js"></script>
+{% endblock %}

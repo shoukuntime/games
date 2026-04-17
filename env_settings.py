@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440
 
+    # LLM (for Draw & Guess topic generation)
+    LLM_API_URL: str = "https://api.openai.com/v1/chat/completions"
+    LLM_API_KEY: str = "your-llm-api-key"
+    LLM_MODEL: str = "gpt-3.5-turbo"
+
     @property
     def DATABASE_URL(self) -> str:
         return (

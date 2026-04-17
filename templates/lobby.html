@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}房間 {{ room_id }} — Games Platform{% endblock %}
+{% block body %}
+<nav class="navbar">
+    <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
+    <div class="nav-right">
+        <span class="nav-user">{{ user.username }}</span>
+        <button class="btn btn-outline btn-sm" onclick="location.href='/dashboard'">離開房間</button>
+    </div>
+</nav>
+<main class="main-content">
+    <div class="lobby-container">
+        <div class="lobby-header">
+            <h1>{{ game_info.name }}</h1>
+            <div class="room-code-display">
+                房間代碼：<strong id="roomCode">{{ room_id }}</strong>
+                <button class="btn btn-sm btn-secondary" onclick="copyCode()">複製</button>
+            </div>
+            <p class="lobby-hint">將房間代碼分享給朋友加入！</p>
+        </div>
+        <div class="lobby-body">
+            <div class="players-list" id="playersList"></div>
+            <div class="lobby-info">
+                <span id="playerCount">1</span> / {{ game_info.max_players }} 位玩家
+                （至少 {{ game_info.min_players }} 人）
+            </div>
+            <div id="lobbyActions">
+                <button class="btn btn-primary btn-full" id="startBtn" style="display:none" onclick="startGame()">
+                    開始遊戲
+                </button>
+                <p id="waitMsg" class="lobby-hint">等待房主開始遊戲...</p>
+            </div>
+        </div>
+        <a href="/dashboard" class="back-link">← 返回遊戲大廳</a>
+    </div>
+</main>
+{% endblock %}
+{% block extra_js %}
+<script>
+const ROOM_ID = "{{ room_id }}";
+const USERNAME = "{{ user.username }}";
+const GAME_TYPE = "{{ game_type }}";
+const MIN_PLAYERS = {{ game_info.min_players }};
+let ws;
+
+function connect() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws/${ROOM_ID}`);
+
+    ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'lobby_update') updateLobby(msg.data);
+        if (msg.type === 'game_started') window.location.href = msg.url;
+        if (msg.type === 'error') alert(msg.message);
+    };
+    ws.onclose = () => setTimeout(connect, 2000);
+}
+
+function updateLobby(data) {
+    const list = document.getElementById('playersList');
+    list.innerHTML = data.players.map(p =>
+        `<div class="player-item">${p === data.host ? '👑 ' : ''}${p}${p === USERNAME ? ' (你)' : ''}</div>`
+    ).join('');
+    document.getElementById('playerCount').textContent = data.players.length;
+
+    const isHost = (data.host === USERNAME);
+    const enough = data.players.length >= MIN_PLAYERS;
+    document.getElementById('startBtn').style.display = isHost ? 'block' : 'none';
+    document.getElementById('startBtn').disabled = !enough;
+    document.getElementById('waitMsg').style.display = isHost ? 'none' : 'block';
+}
+
+function startGame() { ws.send(JSON.stringify({ type: 'start_game' })); }
+
+function copyCode() {
+    navigator.clipboard.writeText(ROOM_ID);
+    const btn = event.target;
+    btn.textContent = '已複製！';
+    setTimeout(() => btn.textContent = '複製', 1500);
+}
+
+connect();
+</script>
+{% endblock %}

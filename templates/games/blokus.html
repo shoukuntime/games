@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Blokus — Games Platform{% endblock %}
+{% block body %}
+<nav class="navbar">
+    <a href="/dashboard" class="nav-brand">🎮 Games Platform</a>
+    <div class="nav-right">
+        <span class="nav-user">{{ user.username }}</span>
+    </div>
+</nav>
+<main class="game-page blokus-page">
+    <div class="blokus-layout">
+        <div class="blokus-sidebar left">
+            <h3>玩家</h3>
+            <div id="playersPanel"></div>
+        </div>
+        <div class="blokus-center">
+            <div id="turnInfo" class="turn-info"></div>
+            <canvas id="boardCanvas" width="600" height="600"></canvas>
+            <div id="gameMessage" class="game-message"></div>
+        </div>
+        <div class="blokus-sidebar right">
+            <h3>你的棋子</h3>
+            <div class="piece-controls">
+                <button class="btn btn-sm btn-secondary" onclick="rotatePiece()">旋轉 ↻</button>
+                <button class="btn btn-sm btn-secondary" onclick="flipPiece()">翻轉 ↔</button>
+            </div>
+            <div id="piecesPanel" class="pieces-panel"></div>
+            <button class="btn btn-secondary btn-full" onclick="passTurn()">跳過回合</button>
+        </div>
+    </div>
+</main>
+{% endblock %}
+{% block extra_js %}
+<script>const ROOM_ID = "{{ room_id }}"; const USERNAME = "{{ user.username }}";</script>
+<script src="/static/js/games/blokus.js"></script>
+{% endblock %}

@@ -1,0 +1,183 @@
+/* Can't Stop game client */
+const COLUMN_HEIGHTS = {2:3,3:5,4:7,5:9,6:11,7:13,8:11,9:9,10:7,11:5,12:3};
+const PLAYER_COLORS = ['#3b82f6', '#ef4444', '#eab308', '#22c55e'];
+let ws, state = null;
+
+function connect() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws/${ROOM_ID}`);
+    ws.onmessage = e => handleMessage(JSON.parse(e.data));
+    ws.onclose = () => setTimeout(connect, 2000);
+}
+
+function handleMessage(msg) {
+    if (msg.type === 'game_state') {
+        state = msg.data;
+        render();
+    } else if (msg.type === 'game_event') {
+        handleEvent(msg.data);
+    } else if (msg.type === 'error') {
+        showMsg(msg.message, 'lose');
+    }
+}
+
+function handleEvent(d) {
+    if (d.event === 'busted') {
+        showMsg(`💥 ${d.player} 爆了！失去所有本回合進度`, 'lose');
+    } else if (d.event === 'player_stopped') {
+        const claimed = d.newly_claimed.length > 0
+            ? `，攻佔欄位 ${d.newly_claimed.join(', ')}！` : '';
+        showMsg(`✋ ${d.player} 選擇停止${claimed}`, 'hint-low');
+    } else if (d.event === 'game_over') {
+        showMsg(`🎉 ${d.winner} 獲勝！`, 'win');
+    }
+}
+
+function render() {
+    if (!state) return;
+    renderPlayers();
+    renderBoard();
+    renderDice();
+    renderPairings();
+    renderActions();
+    renderTurnInfo();
+}
+
+function renderPlayers() {
+    document.getElementById('csPlayers').innerHTML = state.players.map((p, i) => `
+        <div class="player-info ${i === state.current_player ? 'active' : ''}"
+             style="border-left: 4px solid ${PLAYER_COLORS[i]}">
+            <strong>${p.name}${i === state.my_index ? ' (你)' : ''}</strong>
+            <div>攻佔 ${p.columns_won} / 3 欄</div>
+        </div>
+    `).join('');
+}
+
+function renderBoard() {
+    const board = document.getElementById('csBoard');
+    let html = '<div class="cs-columns">';
+    for (let col = 2; col <= 12; col++) {
+        const h = COLUMN_HEIGHTS[col];
+        const claimed = state.claimed[String(col)];
+        html += `<div class="cs-column ${claimed !== undefined ? 'claimed' : ''}">`;
+        html += `<div class="cs-col-num">${col}</div>`;
+
+        for (let step = h - 1; step >= 0; step--) {
+            let cellClass = 'cs-cell';
+            let content = '';
+
+            // Check permanent markers
+            state.players.forEach((p, pi) => {
+                if (p.positions[col] === step) {
+                    content += `<span class="cs-marker" style="background:${PLAYER_COLORS[pi]}"></span>`;
+                }
+            });
+
+            // Check temp markers
+            if (state.temp[col] === step && state.current_player === state.my_index) {
+                content += `<span class="cs-marker temp">⬆</span>`;
+            } else if (state.temp[col] === step) {
+                content += `<span class="cs-marker temp-other">⬆</span>`;
+            }
+
+            if (step === h - 1) cellClass += ' cs-top';
+            if (claimed !== undefined) {
+                content = `<span class="cs-marker" style="background:${PLAYER_COLORS[claimed]}">★</span>`;
+            }
+
+            html += `<div class="${cellClass}">${content}</div>`;
+        }
+        html += '</div>';
+    }
+    html += '</div>';
+    board.innerHTML = html;
+}
+
+function renderDice() {
+    const area = document.getElementById('csDice');
+    if (!state.dice || state.dice.length === 0) {
+        area.innerHTML = '';
+        return;
+    }
+    area.innerHTML = '<div class="dice-group">' +
+        state.dice.map(d => `<div class="die">${dieface(d)}</div>`).join('') +
+        '</div>';
+}
+
+function dieface(n) {
+    const faces = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+    return faces[n] || n;
+}
+
+function renderPairings() {
+    const el = document.getElementById('csPairings');
+    if (state.phase !== 'choosing' || state.my_index !== state.current_player) {
+        el.style.display = 'none';
+        return;
+    }
+    el.style.display = 'block';
+    el.innerHTML = '<p><strong>選擇配對方式：</strong></p>' +
+        state.pairings.map((pair, i) => {
+            const s1 = pair[0][0] + pair[0][1];
+            const s2 = pair[1][0] + pair[1][1];
+            const valid = state.valid_pairing_indices.includes(i);
+            return `<button class="btn ${valid ? 'btn-primary' : 'btn-secondary'} pair-btn"
+                        ${valid ? '' : 'disabled'}
+                        onclick="choosePair(${i})">
+                (${pair[0][0]}+${pair[0][1]}=${s1}) & (${pair[1][0]}+${pair[1][1]}=${s2})
+            </button>`;
+        }).join('');
+}
+
+function renderActions() {
+    const isMe = state.my_index === state.current_player;
+    const rollBtn = document.getElementById('rollBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    rollBtn.style.display = (isMe && (state.phase === 'rolling' || state.phase === 'deciding')) ? 'inline-flex' : 'none';
+    stopBtn.style.display = (isMe && state.phase === 'deciding') ? 'inline-flex' : 'none';
+
+    if (state.phase === 'deciding') {
+        rollBtn.textContent = '🎲 繼續擲';
+    } else {
+        rollBtn.textContent = '🎲 擲骰子';
+    }
+}
+
+function renderTurnInfo() {
+    const el = document.getElementById('csTurnInfo');
+    if (state.winner) {
+        el.innerHTML = `🎉 <strong>${state.winner}</strong> 獲勝！`;
+    } else if (state.my_index === state.current_player) {
+        const phases = {
+            rolling: '輪到你了！擲骰子吧',
+            choosing: '選擇配對方式',
+            deciding: '繼續擲還是停止？',
+            busted: '💥 爆了！進度全失',
+        };
+        el.innerHTML = `<strong style="color:${PLAYER_COLORS[state.my_index]}">${phases[state.phase] || ''}</strong>`;
+    } else {
+        el.innerHTML = `等待 <strong>${state.current_player_name}</strong> 操作...`;
+    }
+}
+
+function rollDice() {
+    ws.send(JSON.stringify({ type: 'roll' }));
+}
+
+function choosePair(index) {
+    ws.send(JSON.stringify({ type: 'choose_pair', index }));
+}
+
+function stopTurn() {
+    ws.send(JSON.stringify({ type: 'stop' }));
+}
+
+function showMsg(text, cls) {
+    const el = document.getElementById('csMessage');
+    el.textContent = text;
+    el.className = `game-message ${cls || ''}`;
+    setTimeout(() => { el.textContent = ''; el.className = 'game-message'; }, 4000);
+}
+
+connect();
