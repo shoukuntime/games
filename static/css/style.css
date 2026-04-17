@@ -251,7 +251,7 @@ a:hover { text-decoration: underline; }
 .blokus-center { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 #boardCanvas { background: #fff; border: 2px solid var(--border); border-radius: var(--radius-sm); cursor: crosshair; }
 
-.piece-controls { display: flex; gap: 6px; margin-bottom: 12px; }
+.piece-controls { display: flex; gap: 6px; margin-bottom: 12px; justify-content: center; }
 .pieces-panel {
     display: flex;
     flex-wrap: wrap;
@@ -259,6 +259,7 @@ a:hover { text-decoration: underline; }
     max-height: 500px;
     overflow-y: auto;
     justify-content: center;
+    margin-bottom: 12px;
 }
 .piece-item {
     padding: 6px;
@@ -266,12 +267,43 @@ a:hover { text-decoration: underline; }
     border-radius: 6px;
     cursor: pointer;
     text-align: center;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
     min-width: 40px;
 }
-.piece-item:hover { border-color: var(--primary); }
+.piece-item:hover { border-color: var(--primary); background: #f0f4ff; }
 .piece-item.selected { border-color: var(--primary); background: var(--primary-light); }
-.piece-name { display: block; font-size: 0.65rem; color: var(--text-light); margin-top: 2px; }
+
+/* Icon buttons */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: inherit;
+    color: var(--text);
+}
+.btn-icon:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.btn-icon.btn-confirm { color: var(--success); border-color: var(--success); font-size: 1.4rem; width: 48px; height: 48px; }
+.btn-icon.btn-confirm:hover { background: #d1fae5; }
+.btn-icon.btn-cancel { color: var(--danger); border-color: var(--danger); font-size: 1.4rem; width: 48px; height: 48px; }
+.btn-icon.btn-cancel:hover { background: #fee2e2; }
+.btn-icon.btn-pass { width: 100%; font-size: 1rem; height: 36px; }
+.btn-icon.btn-pass::after { content: ' 跳過'; font-size: 0.85rem; margin-left: 4px; }
+
+.confirm-bar {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+}
 
 /* === Draw & Guess === */
 .dg-layout {
