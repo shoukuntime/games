@@ -93,6 +93,8 @@ function renderBoard() {
     board.innerHTML = html;
 }
 
+const DICE_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b'];
+
 function renderDice() {
     const area = document.getElementById('csDice');
     if (!state.dice || state.dice.length === 0) {
@@ -100,13 +102,46 @@ function renderDice() {
         return;
     }
     area.innerHTML = '<div class="dice-group">' +
-        state.dice.map(d => `<div class="die">${dieface(d)}</div>`).join('') +
+        state.dice.map((d, i) => `<div class="die">${dieSVG(d, DICE_COLORS[i])}</div>`).join('') +
         '</div>';
 }
 
+function dieSVG(n, color) {
+    const dotPositions = {
+        1: [[24,24]],
+        2: [[12,12],[36,36]],
+        3: [[12,12],[24,24],[36,36]],
+        4: [[12,12],[36,12],[12,36],[36,36]],
+        5: [[12,12],[36,12],[24,24],[12,36],[36,36]],
+        6: [[12,12],[36,12],[12,24],[36,24],[12,36],[36,36]],
+    };
+    const dots = (dotPositions[n] || []).map(([cx,cy]) =>
+        `<circle cx="${cx}" cy="${cy}" r="5" fill="#fff"/>`
+    ).join('');
+    return `<svg viewBox="0 0 48 48" width="48" height="48">
+        <rect x="1" y="1" width="46" height="46" rx="8" fill="${color}"/>
+        ${dots}
+    </svg>`;
+}
+
 function dieface(n) {
-    const faces = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-    return faces[n] || n;
+    // Used in pairing buttons — return small inline SVG
+    const color = '#64748b';
+    const dotPositions = {
+        1: [[12,12]],
+        2: [[6,6],[18,18]],
+        3: [[6,6],[12,12],[18,18]],
+        4: [[6,6],[18,6],[6,18],[18,18]],
+        5: [[6,6],[18,6],[12,12],[6,18],[18,18]],
+        6: [[6,6],[18,6],[6,12],[18,12],[6,18],[18,18]],
+    };
+    const dots = (dotPositions[n] || []).map(([cx,cy]) =>
+        `<circle cx="${cx}" cy="${cy}" r="2.5" fill="#fff"/>`
+    ).join('');
+    return `<svg viewBox="0 0 24 24" width="28" height="28" style="vertical-align:middle">
+        <rect x="0.5" y="0.5" width="23" height="23" rx="4" fill="${color}"/>
+        ${dots}
+    </svg>`;
 }
 
 function renderPairings() {
