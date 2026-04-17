@@ -1,4 +1,4 @@
-/* Blokus game client */
+/* Blokus game client — 4 colors, 2-4 players, drag to place */
 const CELL = 28;
 const BOARD = 20;
 const canvas = document.getElementById('boardCanvas');
@@ -13,16 +13,14 @@ let previewCells = [];
 let mouseCell = null;
 let lockedCells = null;
 let lockedAnchor = null;
-
-// Drag state
 let isDragging = false;
 let dragGhost = null;
 
 const COLORS = ['#3b82f6', '#eab308', '#ef4444', '#22c55e'];
 const COLORS_LIGHT = ['#93bbfd', '#fde047', '#fca5a5', '#86efac'];
-const PREVIEW_CELL = 22;
+const COLOR_NAMES = ['藍', '黃', '紅', '綠'];
+const PREVIEW_CELL = 20;
 
-// --- WebSocket ---
 function connect() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(`${proto}://${location.host}/ws/${ROOM_ID}`);
@@ -39,9 +37,7 @@ function handleMessage(msg) {
     } else if (msg.type === 'game_event') {
         const d = msg.data;
         if (d.event === 'piece_placed') {
-            lockedCells = null;
-            lockedAnchor = null;
-            selectedPiece = null;
+            lockedCells = null; lockedAnchor = null; selectedPiece = null;
             document.getElementById('confirmBar').style.display = 'none';
         } else if (d.event === 'game_over') {
             const scores = d.scores.sort((a, b) => b.score - a.score);
@@ -50,13 +46,54 @@ function handleMessage(msg) {
     }
 }
 
+// --- Helpers ---
+function isMyTurn() { return state && state.is_my_turn && !state.game_over; }
+function curColor() { return state ? state.current_color : 0; }
+
+// --- Full client-side placement validation ---
+function isValidPlacement(cells) {
+    if (!state) return false;
+    const ci = curColor();
+    const bc = ci + 1; // board color value
+    const cellSet = new Set(cells.map(([r,c]) => `${r},${c}`));
+
+    for (const [r, c] of cells) {
+        if (r < 0 || r >= BOARD || c < 0 || c >= BOARD) return false;
+        if (state.board[r][c] !== 0) return false;
+    }
+    // No edge adjacency with same color
+    for (const [r, c] of cells) {
+        for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+            const nr = r+dr, nc = c+dc;
+            if (nr>=0 && nr<BOARD && nc>=0 && nc<BOARD) {
+                if (state.board[nr][nc] === bc && !cellSet.has(`${nr},${nc}`)) return false;
+            }
+        }
+    }
+    // First move: must cover available corner
+    if (state.first_move[ci]) {
+        return cells.some(([r,c]) =>
+            state.available_corners.some(([cr,cc]) => r===cr && c===cc));
+    }
+    // Diagonal adjacency with same color
+    for (const [r, c] of cells) {
+        for (const [dr, dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]) {
+            const nr = r+dr, nc = c+dc;
+            if (nr>=0 && nr<BOARD && nc>=0 && nc<BOARD) {
+                if (state.board[nr][nc] === bc && !cellSet.has(`${nr},${nc}`)) return true;
+            }
+        }
+    }
+    return false;
+}
+
 // --- Render ---
 function render() {
     if (!state) return;
     drawBoard();
     drawPlayers();
     drawPiecesPanel();
-    drawPreview();
+    drawPreviewArea();
     updateTurnInfo();
 }
 
@@ -71,35 +108,38 @@ function drawBoard() {
             ctx.strokeRect(c * CELL, r * CELL, CELL, CELL);
         }
     }
-    // Starting corners
-    const corners = [[0,0],[0,19],[19,19],[19,0]];
-    corners.forEach((co, i) => {
-        if (i < state.players.length) {
-            ctx.fillStyle = COLORS_LIGHT[i];
-            ctx.globalAlpha = 0.3;
-            ctx.fillRect(co[1] * CELL, co[0] * CELL, CELL, CELL);
+
+    // Highlight available corners for first move
+    if (isMyTurn() && state.first_move[curColor()]) {
+        state.available_corners.forEach(([r, c]) => {
+            ctx.fillStyle = COLORS[curColor()];
+            ctx.globalAlpha = 0.2;
+            ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
             ctx.globalAlpha = 1;
-        }
-    });
+            ctx.strokeStyle = COLORS[curColor()];
+            ctx.lineWidth = 2;
+            ctx.strokeRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2);
+            ctx.lineWidth = 1;
+        });
+    }
 
     if (!isMyTurn()) return;
 
-    // Locked placement (confirm/cancel)
+    // Locked placement
     if (lockedCells) {
-        drawCellsOnBoard(lockedCells, 0.6, true);
+        drawCellsOnBoard(lockedCells, 0.65, true);
         return;
     }
-    // Drag/hover preview
-    if (previewCells.length > 0) {
-        drawCellsOnBoard(previewCells, 0.35, false);
+    // Hover/drag preview — only show if valid
+    if (previewCells.length > 0 && isValidPlacement(previewCells)) {
+        drawCellsOnBoard(previewCells, 0.4, false);
     }
 }
 
 function drawCellsOnBoard(cells, alpha, border) {
-    const valid = validateCells(cells);
     cells.forEach(([r, c]) => {
         if (r < 0 || r >= BOARD || c < 0 || c >= BOARD) return;
-        ctx.fillStyle = valid ? COLORS[state.my_index] : '#f87171';
+        ctx.fillStyle = COLORS[curColor()];
         ctx.globalAlpha = alpha;
         ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
         ctx.globalAlpha = 1;
@@ -112,29 +152,29 @@ function drawCellsOnBoard(cells, alpha, border) {
     });
 }
 
-function validateCells(cells) {
-    for (const [r, c] of cells) {
-        if (r < 0 || r >= BOARD || c < 0 || c >= BOARD) return false;
-        if (state.board[r][c] !== 0) return false;
-    }
-    return true;
-}
-
 function drawPlayers() {
-    document.getElementById('playersPanel').innerHTML = state.players.map((p, i) => `
-        <div class="player-info ${i === state.current_turn ? 'active' : ''}" style="border-left: 4px solid ${COLORS[i]}">
-            <strong>${p.name}${i === state.my_index ? ' (你)' : ''}</strong>
-            <div>剩餘 ${p.remaining.length} 塊 | ${p.score} 分</div>
-            ${p.passed ? '<div class="text-muted">已跳過</div>' : ''}
-        </div>
-    `).join('');
+    const panel = document.getElementById('playersPanel');
+    panel.innerHTML = state.players.map((p, i) => {
+        const colorDots = p.colors.map(c =>
+            `<span class="color-dot${c === state.current_color ? ' active-dot' : ''}" style="background:${COLORS[c]}" title="${COLOR_NAMES[c]}"></span>`
+        ).join('');
+        const isCurrentPlayer = (i === state.current_player_idx);
+        return `<div class="player-info ${isCurrentPlayer ? 'active' : ''}">
+            <div class="player-header">${colorDots} <strong>${p.name}${i === state.my_index ? ' (你)' : ''}</strong></div>
+            <div>${p.score} 分</div>
+        </div>`;
+    }).join('');
 }
 
-// --- Piece Panel ---
+// --- Piece Panel: show current color's pieces ---
 function drawPiecesPanel() {
-    if (state.my_index < 0) return;
+    if (!isMyTurn()) {
+        document.getElementById('piecesPanel').innerHTML = '';
+        return;
+    }
     const panel = document.getElementById('piecesPanel');
-    const remaining = state.players[state.my_index].remaining;
+    const ci = curColor();
+    const remaining = state.color_info[ci].remaining;
     const s = 10;
     panel.innerHTML = remaining.map(name => {
         const cells = state.pieces[name];
@@ -142,77 +182,80 @@ function drawPiecesPanel() {
         const maxC = Math.max(...cells.map(c => c[1])) + 1;
         return `<div class="piece-item ${selectedPiece === name ? 'selected' : ''}"
                      onclick="selectPiece('${name}')">
-            <svg width="${maxC * s + 2}" height="${maxR * s + 2}" viewBox="0 0 ${maxC * s + 2} ${maxR * s + 2}">
+            <svg width="${maxC*s+2}" height="${maxR*s+2}" viewBox="0 0 ${maxC*s+2} ${maxR*s+2}">
                 ${cells.map(([r, c]) =>
-                    `<rect x="${c*s+1}" y="${r*s+1}" width="${s}" height="${s}" fill="${COLORS[state.my_index]}" stroke="#fff" stroke-width="0.5"/>`
+                    `<rect x="${c*s+1}" y="${r*s+1}" width="${s}" height="${s}" fill="${COLORS[ci]}" stroke="#fff" stroke-width="0.5"/>`
                 ).join('')}
             </svg>
         </div>`;
     }).join('');
 }
 
-// --- Selected Piece Preview ---
-function drawPreview() {
+// --- Preview Area ---
+function drawPreviewArea() {
     const area = document.getElementById('previewArea');
-    if (!selectedPiece || !state || state.my_index < 0) {
+    if (!selectedPiece || !isMyTurn()) {
         area.innerHTML = '<div class="preview-hint">選擇棋子</div>';
         return;
     }
-    const svg = buildPieceSVG(selectedPiece, currentOrientation, PREVIEW_CELL);
+    const svg = buildPieceSVG(selectedPiece, currentOrientation, PREVIEW_CELL, curColor());
     area.innerHTML = `<div class="preview-piece" id="previewPiece">${svg}</div>
-        <div class="preview-drag-hint">拖曳至棋盤放置</div>`;
-
-    // Attach drag events on the preview piece
+        <div class="preview-drag-hint">↕ 拖曳至棋盤</div>`;
     const el = document.getElementById('previewPiece');
-    el.addEventListener('mousedown', onPreviewMouseDown);
-    el.addEventListener('touchstart', onPreviewTouchStart, { passive: false });
+    el.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e.clientX, e.clientY); });
+    el.addEventListener('touchstart', e => { e.preventDefault(); startDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
 }
 
-function buildPieceSVG(name, oriIdx, cellSize) {
+function buildPieceSVG(name, oriIdx, cellSize, colorIdx) {
     const oris = state.piece_orientations[name];
     const ori = oris[oriIdx % oris.length];
     const maxR = Math.max(...ori.map(c => c[0])) + 1;
     const maxC = Math.max(...ori.map(c => c[1])) + 1;
     const s = cellSize;
-    return `<svg width="${maxC * s + 2}" height="${maxR * s + 2}" viewBox="0 0 ${maxC * s + 2} ${maxR * s + 2}" class="preview-svg">
+    return `<svg width="${maxC*s+2}" height="${maxR*s+2}" viewBox="0 0 ${maxC*s+2} ${maxR*s+2}" class="preview-svg">
         ${ori.map(([r, c]) =>
             `<rect x="${c*s+1}" y="${r*s+1}" width="${s}" height="${s}" rx="2"
-                   fill="${COLORS[state.my_index]}" stroke="#fff" stroke-width="1.5"/>`
+                   fill="${COLORS[colorIdx]}" stroke="#fff" stroke-width="1.5"/>`
         ).join('')}
     </svg>`;
 }
 
-// --- Piece Selection ---
+// --- Selection & Orientation ---
 function selectPiece(name) {
     if (lockedCells) return;
     selectedPiece = name;
     currentOrientation = 0;
     previewCells = [];
     drawPiecesPanel();
-    drawPreview();
+    drawPreviewArea();
 }
 
 function rotatePiece() {
     if (!selectedPiece || !state) return;
     const oris = state.piece_orientations[selectedPiece];
     currentOrientation = (currentOrientation + 1) % oris.length;
-    applyOrientationChange();
+    afterOrientationChange();
 }
 
 function flipPiece() {
     if (!selectedPiece || !state) return;
     const oris = state.piece_orientations[selectedPiece];
     currentOrientation = (currentOrientation + Math.floor(oris.length / 2)) % oris.length;
-    applyOrientationChange();
+    afterOrientationChange();
 }
 
-function applyOrientationChange() {
+function afterOrientationChange() {
     if (lockedCells && lockedAnchor) {
         const oris = state.piece_orientations[selectedPiece];
         const ori = oris[currentOrientation % oris.length];
         lockedCells = ori.map(([r, c]) => [r + lockedAnchor[0], c + lockedAnchor[1]]);
+        // If new orientation is invalid, unlock
+        if (!isValidPlacement(lockedCells)) {
+            lockedCells = null; lockedAnchor = null;
+            document.getElementById('confirmBar').style.display = 'none';
+        }
     }
-    drawPreview();
+    drawPreviewArea();
     updateHoverPreview();
     drawBoard();
 }
@@ -224,131 +267,85 @@ function updateHoverPreview() {
     }
     const oris = state.piece_orientations[selectedPiece];
     const ori = oris[currentOrientation % oris.length];
-    const [mr, mc] = mouseCell;
-    previewCells = ori.map(([r, c]) => [r + mr, c + mc]);
+    previewCells = ori.map(([r, c]) => [r + mouseCell[0], c + mouseCell[1]]);
 }
 
-function isMyTurn() {
-    return state && state.my_index === state.current_turn && !state.game_over;
-}
-
-// --- Drag from preview ---
-function onPreviewMouseDown(e) {
-    if (!selectedPiece || !isMyTurn() || lockedCells) return;
-    e.preventDefault();
-    startDrag(e.clientX, e.clientY);
-}
-
-function onPreviewTouchStart(e) {
-    if (!selectedPiece || !isMyTurn() || lockedCells) return;
-    e.preventDefault();
-    const t = e.touches[0];
-    startDrag(t.clientX, t.clientY);
-}
-
+// --- Drag ---
 function startDrag(x, y) {
+    if (!selectedPiece || !isMyTurn() || lockedCells) return;
     isDragging = true;
     canvas.classList.add('drop-target');
-    // Create ghost
     dragGhost = document.createElement('div');
     dragGhost.className = 'drag-ghost';
-    dragGhost.innerHTML = buildPieceSVG(selectedPiece, currentOrientation, 20);
+    dragGhost.innerHTML = buildPieceSVG(selectedPiece, currentOrientation, 18, curColor());
     document.body.appendChild(dragGhost);
     positionGhost(x, y);
 }
 
 function positionGhost(x, y) {
     if (!dragGhost) return;
-    const ghostRect = dragGhost.getBoundingClientRect();
-    dragGhost.style.left = (x - ghostRect.width / 2) + 'px';
-    dragGhost.style.top = (y - ghostRect.height / 2) + 'px';
+    dragGhost.style.left = x + 'px';
+    dragGhost.style.top = y + 'px';
 }
 
 function endDrag(x, y) {
     isDragging = false;
     canvas.classList.remove('drop-target');
-    if (dragGhost) {
-        dragGhost.remove();
-        dragGhost = null;
-    }
-    // Check if dropped on board
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
     const rect = canvas.getBoundingClientRect();
     if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
         const c = Math.floor((x - rect.left) / CELL);
         const r = Math.floor((y - rect.top) / CELL);
         mouseCell = [r, c];
         updateHoverPreview();
-        if (previewCells.length > 0 && validateCells(previewCells)) {
-            lockPlacement();
-        }
+        if (previewCells.length > 0 && isValidPlacement(previewCells)) lockPlacement();
     }
     previewCells = [];
     drawBoard();
 }
 
-// Global mouse/touch events for drag
 document.addEventListener('mousemove', e => {
     if (isDragging) {
         positionGhost(e.clientX, e.clientY);
         updateBoardFromPointer(e.clientX, e.clientY);
-    } else if (!lockedCells && selectedPiece) {
-        // Normal hover preview on board
+    } else if (!lockedCells && selectedPiece && isMyTurn()) {
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX, y = e.clientY;
-        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-            const c = Math.floor((x - rect.left) / CELL);
-            const r = Math.floor((y - rect.top) / CELL);
-            mouseCell = [r, c];
+        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+            mouseCell = [Math.floor((e.clientY - rect.top) / CELL), Math.floor((e.clientX - rect.left) / CELL)];
             updateHoverPreview();
             drawBoard();
         }
     }
 });
-
-document.addEventListener('mouseup', e => {
-    if (isDragging) endDrag(e.clientX, e.clientY);
-});
-
+document.addEventListener('mouseup', e => { if (isDragging) endDrag(e.clientX, e.clientY); });
 document.addEventListener('touchmove', e => {
     if (!isDragging) return;
     const t = e.touches[0];
     positionGhost(t.clientX, t.clientY);
     updateBoardFromPointer(t.clientX, t.clientY);
 }, { passive: false });
-
 document.addEventListener('touchend', e => {
     if (!isDragging) return;
-    const t = e.changedTouches[0];
-    endDrag(t.clientX, t.clientY);
+    endDrag(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
 });
 
 function updateBoardFromPointer(x, y) {
     const rect = canvas.getBoundingClientRect();
     if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-        const c = Math.floor((x - rect.left) / CELL);
-        const r = Math.floor((y - rect.top) / CELL);
-        mouseCell = [r, c];
+        mouseCell = [Math.floor((y - rect.top) / CELL), Math.floor((x - rect.left) / CELL)];
         updateHoverPreview();
         drawBoard();
-    } else {
-        previewCells = [];
-        drawBoard();
-    }
+    } else { previewCells = []; drawBoard(); }
 }
 
-// Board click (alternative to drag)
 canvas.addEventListener('mouseleave', () => {
     if (lockedCells || isDragging) return;
-    mouseCell = null;
-    previewCells = [];
-    drawBoard();
+    mouseCell = null; previewCells = []; drawBoard();
 });
 
 canvas.addEventListener('click', () => {
     if (lockedCells || isDragging) return;
-    if (previewCells.length > 0 && validateCells(previewCells)) {
-        lockPlacement();
-    }
+    if (previewCells.length > 0 && isValidPlacement(previewCells)) lockPlacement();
 });
 
 // --- Lock / Confirm / Cancel ---
@@ -362,16 +359,11 @@ function lockPlacement() {
 
 function confirmPlace() {
     if (!lockedCells || !selectedPiece) return;
-    ws.send(JSON.stringify({
-        type: 'place_piece',
-        piece: selectedPiece,
-        cells: lockedCells,
-    }));
+    ws.send(JSON.stringify({ type: 'place_piece', piece: selectedPiece, cells: lockedCells }));
 }
 
 function cancelPlace() {
-    lockedCells = null;
-    lockedAnchor = null;
+    lockedCells = null; lockedAnchor = null;
     document.getElementById('confirmBar').style.display = 'none';
     drawBoard();
 }
@@ -381,16 +373,20 @@ function passTurn() {
     ws.send(JSON.stringify({ type: 'pass' }));
 }
 
-// --- UI Helpers ---
 function updateTurnInfo() {
     const el = document.getElementById('turnInfo');
     if (state.game_over) {
         el.textContent = '遊戲結束';
     } else {
-        const p = state.players[state.current_turn];
-        el.innerHTML = isMyTurn()
-            ? `<strong style="color:${COLORS[state.my_index]}">輪到你了！</strong> 選擇棋子放置`
-            : `等待 <strong>${p.name}</strong> 操作...`;
+        const ci = curColor();
+        const cname = COLOR_NAMES[ci];
+        const cdot = `<span class="color-dot" style="background:${COLORS[ci]}"></span>`;
+        if (isMyTurn()) {
+            el.innerHTML = `${cdot} <strong style="color:${COLORS[ci]}">輪到你的${cname}色！</strong> 選擇棋子放置`;
+        } else {
+            const pname = state.players[state.current_player_idx].name;
+            el.innerHTML = `${cdot} 等待 <strong>${pname}</strong> 的${cname}色操作...`;
+        }
     }
 }
 
@@ -400,7 +396,6 @@ function showMessage(text, cls) {
     el.className = `game-message ${cls || ''}`;
 }
 
-// Keyboard shortcuts
 document.addEventListener('keydown', e => {
     if (e.key === 'r' || e.key === 'R') rotatePiece();
     if (e.key === 'f' || e.key === 'F') flipPiece();

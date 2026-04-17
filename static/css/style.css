@@ -237,6 +237,16 @@ a:hover { text-decoration: underline; }
     text-align: left;
 }
 .player-info.active { background: var(--primary-light); }
+.player-header { display: flex; align-items: center; gap: 4px; }
+.color-dot {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+.color-dot.active-dot { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg-card); }
 
 /* === Blokus === */
 .blokus-layout {
@@ -334,9 +344,9 @@ a:hover { text-decoration: underline; }
     position: fixed;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.75;
+    opacity: 0.7;
     filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.25));
-    transform: scale(1.05);
+    transform: translate(-50%, -50%) scale(1.1);
 }
 
 .confirm-bar {
