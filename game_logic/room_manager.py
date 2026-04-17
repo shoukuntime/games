@@ -30,6 +30,10 @@ class Room:
 
     async def add_player(self, username: str, ws: WebSocket):
         if username not in self.players:
+            # During a game, only allow existing players to reconnect
+            if self.status == "playing":
+                await ws.send_json({"type": "error", "message": "遊戲已開始，無法加入"})
+                return False
             from game_logic import GAME_INFO
             info = GAME_INFO[self.game_type]
             if len(self.players) >= info["max_players"]:
@@ -37,11 +41,18 @@ class Room:
                 return False
             self.players.append(username)
         self.connections[username] = ws
-        await self.broadcast({"type": "lobby_update", "data": self.get_lobby_state()})
+        if self.status == "playing":
+            # Reconnecting during game — send current game state
+            await self.broadcast_game_state()
+        else:
+            await self.broadcast({"type": "lobby_update", "data": self.get_lobby_state()})
         return True
 
     async def remove_player(self, username: str):
         self.connections.pop(username, None)
+        # During a game, keep the player in the list (they may be transitioning pages)
+        if self.status == "playing":
+            return
         if username in self.players:
             self.players.remove(username)
         if username == self.host and self.players:
