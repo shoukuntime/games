@@ -1,59 +1,120 @@
-"""Draw & Guess game engine — one player draws, others guess the word."""
+"""Draw & Guess game engine — LLM-powered multilingual judging."""
 
-import asyncio
 import random
+import time
 import httpx
 
 from env_settings import get_settings
 
+# Trilingual fallback words
 FALLBACK_WORDS = [
-    "貓", "狗", "大象", "長頸鹿", "企鵝", "海豚", "恐龍", "蝴蝶", "螃蟹", "鯊魚",
-    "老鷹", "烏龜", "兔子", "熊貓", "獅子", "蛇", "章魚", "蜜蜂", "青蛙", "鱷魚",
-    "披薩", "漢堡", "壽司", "拉麵", "冰淇淋", "蛋糕", "西瓜", "珍珠奶茶", "薯條", "巧克力",
-    "雨傘", "腳踏車", "飛機", "火箭", "吉他", "鑽石", "望遠鏡", "機器人", "寶劍", "皇冠",
-    "城堡", "金字塔", "燈塔", "摩天輪", "火山", "瀑布", "彩虹", "月亮", "太陽", "流星",
-    "游泳", "跳舞", "釣魚", "滑雪", "衝浪", "攀岩", "打籃球", "騎馬", "射箭", "溜冰",
-    "超人", "忍者", "海盜", "公主", "外星人", "巫師", "消防員", "太空人", "廚師", "偵探",
-    "電視", "手機", "鬧鐘", "沙發", "冰箱", "微波爐", "洗衣機", "鋼琴", "小提琴", "鼓",
-    "聖誕樹", "雪人", "南瓜燈", "氣球", "煙火", "帳篷", "降落傘", "潛水艇", "直升機", "帆船",
-    "仙人掌", "向日葵", "蘑菇", "櫻花", "椰子樹", "竹子", "四葉草", "玫瑰", "鬱金香", "蓮花",
+    {"zh": "貓", "en": "Cat", "ja": "猫"}, {"zh": "狗", "en": "Dog", "ja": "犬"},
+    {"zh": "大象", "en": "Elephant", "ja": "象"}, {"zh": "長頸鹿", "en": "Giraffe", "ja": "キリン"},
+    {"zh": "企鵝", "en": "Penguin", "ja": "ペンギン"}, {"zh": "恐龍", "en": "Dinosaur", "ja": "恐竜"},
+    {"zh": "蝴蝶", "en": "Butterfly", "ja": "蝶"}, {"zh": "鯊魚", "en": "Shark", "ja": "サメ"},
+    {"zh": "海豚", "en": "Dolphin", "ja": "イルカ"}, {"zh": "獅子", "en": "Lion", "ja": "ライオン"},
+    {"zh": "披薩", "en": "Pizza", "ja": "ピザ"}, {"zh": "漢堡", "en": "Hamburger", "ja": "ハンバーガー"},
+    {"zh": "壽司", "en": "Sushi", "ja": "寿司"}, {"zh": "冰淇淋", "en": "Ice Cream", "ja": "アイスクリーム"},
+    {"zh": "蛋糕", "en": "Cake", "ja": "ケーキ"}, {"zh": "珍珠奶茶", "en": "Bubble Tea", "ja": "タピオカミルクティー"},
+    {"zh": "雨傘", "en": "Umbrella", "ja": "傘"}, {"zh": "腳踏車", "en": "Bicycle", "ja": "自転車"},
+    {"zh": "飛機", "en": "Airplane", "ja": "飛行機"}, {"zh": "火箭", "en": "Rocket", "ja": "ロケット"},
+    {"zh": "吉他", "en": "Guitar", "ja": "ギター"}, {"zh": "鑽石", "en": "Diamond", "ja": "ダイヤモンド"},
+    {"zh": "城堡", "en": "Castle", "ja": "城"}, {"zh": "金字塔", "en": "Pyramid", "ja": "ピラミッド"},
+    {"zh": "火山", "en": "Volcano", "ja": "火山"}, {"zh": "彩虹", "en": "Rainbow", "ja": "虹"},
+    {"zh": "太陽", "en": "Sun", "ja": "太陽"}, {"zh": "月亮", "en": "Moon", "ja": "月"},
+    {"zh": "機器人", "en": "Robot", "ja": "ロボット"}, {"zh": "超人", "en": "Superman", "ja": "スーパーマン"},
+    {"zh": "忍者", "en": "Ninja", "ja": "忍者"}, {"zh": "海盜", "en": "Pirate", "ja": "海賊"},
+    {"zh": "消防員", "en": "Firefighter", "ja": "消防士"}, {"zh": "太空人", "en": "Astronaut", "ja": "宇宙飛行士"},
+    {"zh": "游泳", "en": "Swimming", "ja": "水泳"}, {"zh": "滑雪", "en": "Skiing", "ja": "スキー"},
+    {"zh": "釣魚", "en": "Fishing", "ja": "釣り"}, {"zh": "跳舞", "en": "Dancing", "ja": "ダンス"},
+    {"zh": "聖誕樹", "en": "Christmas Tree", "ja": "クリスマスツリー"}, {"zh": "雪人", "en": "Snowman", "ja": "雪だるま"},
 ]
 
+PASS_THRESHOLD = 80
+BASE_SCORE = 30
+ROUND_TIME = 90
 
-async def generate_words_from_llm(count: int = 3) -> list[str]:
+
+async def generate_words_from_llm(count: int = 3) -> list[dict]:
+    """Generate trilingual word choices. Returns list of {zh, en, ja}."""
     settings = get_settings()
     if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your-llm-api-key":
         return random.sample(FALLBACK_WORDS, min(count, len(FALLBACK_WORDS)))
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
                 settings.LLM_API_URL,
-                headers={
-                    "Authorization": f"Bearer {settings.LLM_API_KEY}",
-                    "Content-Type": "application/json",
-                },
+                headers={"Authorization": f"Bearer {settings.LLM_API_KEY}", "Content-Type": "application/json"},
                 json={
                     "model": settings.LLM_MODEL,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": (
-                                f"請生成 {count} 個適合「你畫我猜」遊戲的繁體中文詞語。"
-                                "要求：具體、可以畫出來的名詞或動作，難度適中。"
-                                "每個詞語用逗號分隔，只回覆詞語，不要其他文字。"
-                            ),
-                        }
-                    ],
-                    "max_tokens": 100,
+                    "messages": [{"role": "user", "content": (
+                        f"Generate {count} concrete, drawable nouns for a drawing guessing game.\n"
+                        "For each word, provide translations in Chinese (Traditional), English, and Japanese.\n"
+                        "Format (one per line): Chinese|English|Japanese\n"
+                        "Example: 貓|Cat|猫\n"
+                        f"Only output {count} lines, nothing else."
+                    )}],
+                    "max_tokens": 200,
                 },
             )
             text = resp.json()["choices"][0]["message"]["content"].strip()
-            words = [w.strip() for w in text.replace("、", ",").split(",") if w.strip()]
+            words = []
+            for line in text.strip().split("\n"):
+                parts = [p.strip() for p in line.split("|")]
+                if len(parts) >= 3:
+                    words.append({"zh": parts[0], "en": parts[1], "ja": parts[2]})
             if len(words) >= count:
                 return words[:count]
     except Exception:
         pass
     return random.sample(FALLBACK_WORDS, min(count, len(FALLBACK_WORDS)))
+
+
+async def judge_guess_with_llm(word: dict, guess: str) -> int:
+    """Use LLM to score a guess 0-100. Returns score."""
+    settings = get_settings()
+    # Quick exact match check first
+    guess_lower = guess.strip().lower()
+    for lang in ["zh", "en", "ja"]:
+        if guess_lower == word.get(lang, "").lower():
+            return 100
+
+    if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your-llm-api-key":
+        # Fallback: simple partial matching
+        for lang in ["zh", "en", "ja"]:
+            w = word.get(lang, "").lower()
+            if w and (w in guess_lower or guess_lower in w):
+                return 90
+        return 0
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                settings.LLM_API_URL,
+                headers={"Authorization": f"Bearer {settings.LLM_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": settings.LLM_MODEL,
+                    "messages": [{"role": "user", "content": (
+                        f"You are a judge for a drawing guessing game.\n"
+                        f"The answer is: {word['zh']} / {word['en']} / {word['ja']}\n"
+                        f"The player guessed: \"{guess}\"\n"
+                        f"Score the guess from 0 to 100:\n"
+                        f"- 100 = exact match or obvious synonym in any language\n"
+                        f"- 80-99 = close enough (e.g. 'kitty' for 'cat')\n"
+                        f"- 50-79 = related but not quite right\n"
+                        f"- 0-49 = wrong\n"
+                        f"Reply with ONLY a number, nothing else."
+                    )}],
+                    "max_tokens": 10,
+                },
+            )
+            score_text = resp.json()["choices"][0]["message"]["content"].strip()
+            return min(100, max(0, int("".join(c for c in score_text if c.isdigit()) or "0")))
+    except Exception:
+        # Fallback
+        for lang in ["zh", "en", "ja"]:
+            if guess_lower == word.get(lang, "").lower():
+                return 100
+        return 0
 
 
 class DrawGuessGame:
@@ -62,32 +123,32 @@ class DrawGuessGame:
         self.num_players = len(players)
         self.scores = {p: 0 for p in players}
         self.current_drawer_idx = 0
-        self.current_word = None
-        self.word_choices = []
+        self.current_word = None  # {zh, en, ja}
+        self.word_choices = []    # list of {zh, en, ja}
         self.round = 0
         self.max_rounds = len(players)
-        self.phase = "waiting"  # waiting, choosing, drawing, round_end, game_over
+        self.phase = "waiting"
         self.guessed_correctly = set()
         self.strokes = []
-        self.timer_task = None
         self.time_left = 0
         self.round_scores = {}
+        self.round_start_time = 0
+        self.first_correct_elapsed = None  # seconds elapsed when first correct
 
     def get_state(self, username: str):
         player_idx = self.players.index(username) if username in self.players else -1
         is_drawer = (player_idx == self.current_drawer_idx)
+
         word_display = None
-        if self.phase == "drawing":
+        if self.phase == "drawing" and self.current_word:
             if is_drawer:
-                word_display = self.current_word
+                word_display = f"{self.current_word['zh']} / {self.current_word['en']} / {self.current_word['ja']}"
             else:
-                word_display = " ".join("＿" if c != " " else " " for c in self.current_word)
+                # Show underscores based on Chinese word length
+                word_display = " ".join("＿" for _ in self.current_word["zh"])
 
         return {
-            "players": [
-                {"name": p, "score": self.scores[p]}
-                for p in self.players
-            ],
+            "players": [{"name": p, "score": self.scores[p]} for p in self.players],
             "current_drawer": self.players[self.current_drawer_idx],
             "my_index": player_idx,
             "is_drawer": is_drawer,
@@ -106,41 +167,41 @@ class DrawGuessGame:
         if action_type == "request_words":
             return self._request_words(username)
         elif action_type == "choose_word":
-            return self._choose_word(username, action.get("word", ""))
+            return self._choose_word(username, action.get("word_index", 0))
         elif action_type == "draw":
             return self._draw(username, action.get("stroke"))
         elif action_type == "clear_canvas":
             return self._clear_canvas(username)
-        elif action_type == "guess":
-            return self._guess(username, action.get("text", ""))
         elif action_type == "next_round":
             return self._start_next_round()
+        # "guess" is handled externally in main.py (needs async LLM)
         return []
 
     def _request_words(self, username: str) -> list[dict]:
         player_idx = self.players.index(username)
         if player_idx != self.current_drawer_idx:
             return []
-        # Words will be generated async — handled by caller
         self.phase = "choosing"
         return [{"type": "game_event", "data": {"event": "generating_words"}}]
 
-    def set_word_choices(self, words: list[str]):
+    def set_word_choices(self, words: list[dict]):
         self.word_choices = words
         self.phase = "choosing"
 
-    def _choose_word(self, username: str, word: str) -> list[dict]:
+    def _choose_word(self, username: str, word_index: int) -> list[dict]:
         player_idx = self.players.index(username)
-        if player_idx != self.current_drawer_idx:
+        if player_idx != self.current_drawer_idx or self.phase != "choosing":
             return []
-        if self.phase != "choosing":
+        if word_index < 0 or word_index >= len(self.word_choices):
             return []
-        self.current_word = word
+        self.current_word = self.word_choices[word_index]
         self.phase = "drawing"
-        self.time_left = 90
+        self.time_left = ROUND_TIME
         self.guessed_correctly = set()
         self.strokes = []
         self.round_scores = {}
+        self.round_start_time = time.time()
+        self.first_correct_elapsed = None
         return [{"type": "game_event", "data": {"event": "drawing_started", "drawer": username}}]
 
     def _draw(self, username: str, stroke: dict) -> list[dict]:
@@ -156,46 +217,71 @@ class DrawGuessGame:
         self.strokes = []
         return [{"type": "clear_canvas"}]
 
-    def _guess(self, username: str, text: str) -> list[dict]:
-        if self.phase != "drawing":
-            return []
-        if self.players.index(username) == self.current_drawer_idx:
-            return []
-        if username in self.guessed_correctly:
+    def process_guess_result(self, username: str, guess_text: str, llm_score: int) -> list[dict]:
+        """Called by main.py after LLM scoring. Returns events."""
+        if self.phase != "drawing" or username in self.guessed_correctly:
             return []
 
-        text = text.strip()
+        drawer = self.players[self.current_drawer_idx]
         events = []
 
-        if text.lower() == self.current_word.lower():
+        if llm_score >= PASS_THRESHOLD:
+            elapsed = time.time() - self.round_start_time
             self.guessed_correctly.add(username)
-            # Score: earlier guessers get more points
-            guess_order = len(self.guessed_correctly)
-            guesser_score = max(10, 30 - (guess_order - 1) * 5)
+
+            if self.first_correct_elapsed is None:
+                self.first_correct_elapsed = elapsed
+                guesser_score = BASE_SCORE
+            else:
+                ratio = self.first_correct_elapsed / max(elapsed, 0.1)
+                guesser_score = max(5, round(BASE_SCORE * ratio))
+
             self.scores[username] = self.scores.get(username, 0) + guesser_score
             self.round_scores[username] = guesser_score
-            # Drawer gets points too
-            drawer = self.players[self.current_drawer_idx]
+
+            # Drawer bonus
             drawer_bonus = 10
             self.scores[drawer] = self.scores.get(drawer, 0) + drawer_bonus
             self.round_scores[drawer] = self.round_scores.get(drawer, 0) + drawer_bonus
 
+            # Notify guesser (private)
+            events.append({"type": "game_event", "data": {
+                "event": "guess_result",
+                "player": username, "text": guess_text,
+                "llm_score": llm_score, "correct": True,
+                "points": guesser_score,
+            }, "_target": username})
+
+            # Notify drawer (private)
+            events.append({"type": "game_event", "data": {
+                "event": "guess_result",
+                "player": username, "text": guess_text,
+                "llm_score": llm_score, "correct": True,
+                "points": guesser_score,
+            }, "_target": drawer})
+
+            # Broadcast correct (no guess text shown)
             events.append({"type": "game_event", "data": {
                 "event": "correct_guess",
-                "player": username,
-                "score": guesser_score,
+                "player": username, "score": guesser_score,
             }})
 
-            # If all guessers got it, end round
+            # Check if all guessed
             guessers = [p for i, p in enumerate(self.players) if i != self.current_drawer_idx]
             if len(self.guessed_correctly) >= len(guessers):
                 events.extend(self._end_round())
         else:
+            # Wrong — notify guesser + drawer only
             events.append({"type": "game_event", "data": {
-                "event": "guess",
-                "player": username,
-                "text": text,
-            }})
+                "event": "guess_result",
+                "player": username, "text": guess_text,
+                "llm_score": llm_score, "correct": False,
+            }, "_target": username})
+            events.append({"type": "game_event", "data": {
+                "event": "guess_result",
+                "player": username, "text": guess_text,
+                "llm_score": llm_score, "correct": False,
+            }, "_target": drawer})
 
         return events
 
@@ -209,12 +295,12 @@ class DrawGuessGame:
 
     def _end_round(self) -> list[dict]:
         self.phase = "round_end"
-        events = [{"type": "game_event", "data": {
+        word_str = f"{self.current_word['zh']} / {self.current_word['en']} / {self.current_word['ja']}" if self.current_word else ""
+        return [{"type": "game_event", "data": {
             "event": "round_end",
-            "word": self.current_word,
+            "word": word_str,
             "round_scores": self.round_scores,
         }}]
-        return events
 
     def _start_next_round(self) -> list[dict]:
         self.round += 1

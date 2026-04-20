@@ -552,7 +552,15 @@ a:hover { text-decoration: underline; }
 .draw-tools input[type="range"] { width: 100px; }
 
 .word-choices { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.word-btn { font-size: 1.1rem !important; padding: 12px 24px !important; }
+.word-btn {
+    font-size: 1rem !important; padding: 12px 20px !important;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.word-main { font-size: 1.1rem; font-weight: 700; }
+.word-sub { font-size: 0.75rem; opacity: 0.8; font-weight: 400; }
+.chat-msg.my-guess { color: var(--text-light); font-style: italic; }
+.chat-msg.wrong-guess { color: var(--warning); }
+.chat-msg.correct { color: var(--success); font-weight: 700; }
 
 .timer-bar {
     width: 100%;

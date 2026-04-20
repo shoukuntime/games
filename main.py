@@ -13,7 +13,7 @@ from api.v1.router import api_router
 from api.deps import get_current_user
 from game_logic import GAME_INFO
 from game_logic.room_manager import room_manager
-from game_logic.draw_guess import generate_words_from_llm
+from game_logic.draw_guess import generate_words_from_llm, judge_guess_with_llm
 from models import User  # noqa: F401
 
 settings = get_settings()
@@ -147,6 +147,20 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                 if room.game and room.game_type == "draw-guess":
                     words = await generate_words_from_llm(3)
                     room.game.set_word_choices(words)
+                    await room.broadcast_game_state()
+
+            elif msg_type == "guess" and room.game and room.game_type == "draw-guess":
+                # Async LLM judging for draw-guess
+                guess_text = data.get("text", "").strip()
+                if guess_text and room.game.current_word and room.game.phase == "drawing":
+                    llm_score = await judge_guess_with_llm(room.game.current_word, guess_text)
+                    events = room.game.process_guess_result(username, guess_text, llm_score)
+                    for event in events:
+                        target = event.pop("_target", "all")
+                        if target == "all":
+                            await room.broadcast(event)
+                        else:
+                            await room.send_to(target, event)
                     await room.broadcast_game_state()
 
             else:

@@ -129,6 +129,8 @@ const I18N = {
         "dg.next_round": "下一回合",
         "dg.game_over": "🏆 遊戲結束！",
         "dg.correct": "{name} 猜對了！(+{score}分)",
+        "dg.llm_score": "AI 評分",
+        "dg.you_guessed": "你已猜對！等待其他人...",
         "dg.answer_reveal": "📢 答案是：{word}",
         // Can't Stop
         "cs.players": "玩家",
@@ -269,6 +271,8 @@ const I18N = {
         "dg.next_round": "Next Round",
         "dg.game_over": "🏆 Game Over!",
         "dg.correct": "{name} guessed it! (+{score}pts)",
+        "dg.llm_score": "AI Score",
+        "dg.you_guessed": "You guessed it! Waiting for others...",
         "dg.answer_reveal": "📢 Answer: {word}",
         "cs.players": "Players",
         "cs.columns_won": "Claimed {n} / 3 cols",
@@ -408,6 +412,8 @@ const I18N = {
         "dg.next_round": "次のラウンド",
         "dg.game_over": "🏆 ゲーム終了！",
         "dg.correct": "{name}が正解！(+{score}点)",
+        "dg.llm_score": "AI採点",
+        "dg.you_guessed": "正解！他の人を待っています...",
         "dg.answer_reveal": "📢 答え：{word}",
         "cs.players": "プレイヤー",
         "cs.columns_won": "制覇 {n} / 3 列",
@@ -492,13 +498,22 @@ const HELP = {
 <h3>👥 人數</h3><p>2-8 人。</p>
 <h3>📏 規則</h3>
 <ul>
-<li>每輪由一位玩家擔任<b>畫家</b>，從 3 個題目中選 1 個。</li>
+<li>每輪由一位玩家擔任<b>畫家</b>，從 3 個三語題目（中/英/日）中選 1 個。</li>
 <li>畫家在畫布上畫圖，<b>不可寫字</b>。</li>
-<li>其他玩家在聊天區輸入猜測，猜對即得分。</li>
+<li>猜題者可用<b>任何語言</b>回答，由 <b>AI 評分</b>（0-100 分）。</li>
+<li>AI 評分 ≥ 80 分才算猜對，不到 80 分可繼續作答。</li>
 <li>每輪限時 90 秒。</li>
-<li>越早猜對分數越高（最高 30 分）。</li>
-<li>畫家每有人猜對也得 10 分。</li>
-<li>所有人輪流畫完即結束，最高分者獲勝。</li>
+</ul>
+<h3>🏆 計分</h3>
+<ul>
+<li><b>第一個猜對</b>：獲得滿分 30 分。</li>
+<li><b>之後猜對</b>：30 × (第一人花的時間 ÷ 你花的時間)。</li>
+<li>畫家每有人猜對得 10 分。</li>
+</ul>
+<h3>👁 隱私</h3>
+<ul>
+<li>你的回答<b>只有自己和畫家</b>能看到。</li>
+<li>其他人只會看到「某某猜對了」的通知。</li>
 </ul>
 <h3>🎮 操作</h3>
 <ul>
@@ -567,13 +582,20 @@ const HELP = {
 <h3>👥 Players</h3><p>2-8 players.</p>
 <h3>📏 Rules</h3>
 <ul>
-<li>Each round, one player is the <b>artist</b> and picks a word from 3 choices.</li>
+<li>Each round, one player is the <b>artist</b> and picks from 3 trilingual words (ZH/EN/JA).</li>
 <li>The artist draws on canvas — <b>no writing allowed</b>.</li>
-<li>Others type guesses in chat. Correct = points.</li>
-<li>90 seconds per round. Earlier guesses = more points (up to 30).</li>
+<li>Guessers can answer in <b>any language</b>. <b>AI scores</b> each guess (0-100).</li>
+<li>Score ≥ 80 = correct. Below 80 = try again.</li>
+<li>90 seconds per round.</li>
+</ul>
+<h3>🏆 Scoring</h3>
+<ul>
+<li><b>First correct</b>: 30 points.</li>
+<li><b>Later correct</b>: 30 × (first person's time ÷ your time).</li>
 <li>Artist gets 10 points per correct guesser.</li>
-<li>Highest score after all rounds wins.</li>
-</ul>`,
+</ul>
+<h3>👁 Privacy</h3>
+<ul><li>Your guesses are only visible to <b>you and the artist</b>.</li></ul>`,
         "cant-stop": `<h2>🎲 Can't Stop — How to Play</h2>
 <h3>🎯 Goal</h3><p>Be the first to claim 3 columns.</p>
 <h3>👥 Players</h3><p>2-4 players.</p>
@@ -629,12 +651,20 @@ const HELP = {
 <h3>👥 人数</h3><p>2〜8人。</p>
 <h3>📏 ルール</h3>
 <ul>
-<li>毎ラウンド1人が<b>描く役</b>、3つのお題から1つ選択。</li>
+<li>毎ラウンド1人が<b>描く役</b>、3つの3言語お題（中/英/日）から1つ選択。</li>
 <li>キャンバスに絵を描く（<b>文字禁止</b>）。</li>
-<li>他の人はチャットで回答。正解でポイント獲得。</li>
-<li>各ラウンド90秒。早く当てるほど高得点（最大30点）。</li>
-<li>全員が描いた後、最高得点者の勝利。</li>
-</ul>`,
+<li><b>どの言語</b>でも回答可能。<b>AI採点</b>（0-100点）。</li>
+<li>80点以上＝正解。80点未満＝再挑戦可能。</li>
+<li>各ラウンド90秒。</li>
+</ul>
+<h3>🏆 スコア</h3>
+<ul>
+<li><b>最初の正解者</b>：30点。</li>
+<li><b>以降の正解者</b>：30 ×（最初の人の時間 ÷ 自分の時間）。</li>
+<li>描く人は正解者1人につき10点。</li>
+</ul>
+<h3>👁 プライバシー</h3>
+<ul><li>回答は<b>自分と描く人だけ</b>が見えます。</li></ul>`,
         "cant-stop": `<h2>🎲 Can't Stop — 遊び方</h2>
 <h3>🎯 目的</h3><p>3つの列を最初に制覇した人の勝利。</p>
 <h3>👥 人数</h3><p>2〜4人。</p>
