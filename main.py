@@ -13,7 +13,7 @@ from api.v1.router import api_router
 from api.deps import get_current_user
 from game_logic import GAME_INFO
 from game_logic.room_manager import room_manager
-from game_logic.draw_guess import generate_words_from_llm, judge_guess_with_llm
+from game_logic.draw_guess import generate_all_words, judge_guess_with_llm
 from models import User  # noqa: F401
 
 settings = get_settings()
@@ -160,16 +160,15 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                 room.start_game()
                 game_url = f"/games/{room.game_type}/{room_id}"
                 await room.broadcast({"type": "game_started", "url": game_url})
-                await room.broadcast_game_state()
 
                 if room.game_type == "draw-guess":
+                    # Pre-generate all words before starting
+                    await room.broadcast({"type": "game_event", "data": {"event": "loading_words"}})
+                    all_words = await generate_all_words(room.game.max_rounds)
+                    room.game.set_word_pool(all_words)
                     timer_task = asyncio.create_task(_draw_guess_timer(room))
 
-            elif msg_type == "request_words":
-                if room.game and room.game_type == "draw-guess":
-                    words = await generate_words_from_llm(3)
-                    room.game.set_word_choices(words)
-                    await room.broadcast_game_state()
+                await room.broadcast_game_state()
 
             elif msg_type == "guess" and room.game and room.game_type == "draw-guess":
                 # Async LLM judging for draw-guess
@@ -204,9 +203,10 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
 
 async def _draw_guess_timer(room):
     try:
-        while room.status == "playing" and room.game:
+        while room.status == "playing" and room.game and room.game.phase != "game_over":
             await asyncio.sleep(1)
-            if room.game.phase == "drawing":
+            if room.game.phase in ("choosing", "drawing", "round_end"):
+                old_phase = room.game.phase
                 events = room.game.tick()
                 for event in events:
                     target = event.pop("_target", "all")
@@ -214,7 +214,8 @@ async def _draw_guess_timer(room):
                         await room.broadcast(event)
                     else:
                         await room.send_to(target, event)
-                if room.game.phase == "round_end":
+                # Broadcast state on phase transitions
+                if room.game.phase != old_phase:
                     await room.broadcast_game_state()
     except asyncio.CancelledError:
         pass
