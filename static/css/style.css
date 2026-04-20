@@ -691,7 +691,9 @@ a:hover { text-decoration: underline; }
 }
 .tool-btn:hover { border-color: var(--danger); background: #fee2e2; }
 
-.word-choices { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.word-choices { display: flex; gap: 16px; justify-content: center; flex-wrap: nowrap; }
+.word-choices .word-btn { flex: 1; min-width: 0; }
+
 .choose-countdown {
     display: inline-block; background: var(--danger); color: #fff;
     padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: 800;
@@ -974,7 +976,7 @@ a:hover { text-decoration: underline; }
     .canvas-wrapper { width: 100%; }
     .draw-tools { gap: 6px; flex-wrap: wrap; justify-content: center; }
     .draw-tools input[type="range"] { width: 80px; }
-    .word-choices { gap: 6px; }
+    .word-choices { gap: 8px; flex-wrap: wrap; }
     .word-btn { font-size: 0.95rem !important; padding: 10px 16px !important; }
     .dg-chat { padding: 10px; max-height: 200px; }
     .chat-messages { font-size: 0.8rem; }

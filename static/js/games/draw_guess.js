@@ -23,6 +23,11 @@ function handleMessage(msg) {
     else if (msg.type === 'timer') {
         if (state) { state.time_left = msg.data.time_left; state.phase = msg.data.phase; }
         updateTimer(msg.data.time_left, msg.data.phase);
+        // Update choosing countdown text in real-time
+        if (msg.data.phase === 'choosing') {
+            const cd = document.querySelector('.choose-countdown');
+            if (cd) cd.textContent = msg.data.time_left + 's';
+        }
     }
     else if (msg.type === 'game_event') handleGameEvent(msg.data);
     else if (msg.type === 'error') addGuessLog('⚠', msg.message, 'error');
@@ -44,12 +49,14 @@ function handleGameEvent(d) {
     } else if (d.event === 'game_over') {
         const ranking = d.ranking.map((r, i) => `${i+1}. ${r.name}: ${r.score}`).join('\n');
         addGuessLog('🏆', `${t('dg.game_over')}\n${ranking}`, 'system');
-    } else if (d.event === 'drawing_started') {
+    } else if (d.event === 'drawing_started' || d.event === 'auto_chosen') {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         document.getElementById('guessLog').innerHTML = '';
     } else if (d.event === 'new_round') {
         document.getElementById('guessLog').innerHTML = '';
     }
+    // Re-render on any phase-changing event
+    if (state) renderState();
 }
 
 function addGuessLog(icon, text, cls) {
