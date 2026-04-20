@@ -14,6 +14,7 @@ class Room:
         self.connections: dict[str, WebSocket] = {}
         self.game = None
         self.status = "waiting"  # waiting, playing, finished
+        self.timer_task = None
         self.settings: dict = {
             "time_limit": 0,    # minutes, 0 = unlimited
             "max_rounds": 0,    # 0 = default per game

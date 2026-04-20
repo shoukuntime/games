@@ -117,8 +117,6 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
         await websocket.close()
         return
 
-    timer_task = None
-
     try:
         while True:
             data = await websocket.receive_json()
@@ -162,11 +160,10 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                 await room.broadcast({"type": "game_started", "url": game_url})
 
                 if room.game_type == "draw-guess":
-                    # Pre-generate all words before starting
                     await room.broadcast({"type": "game_event", "data": {"event": "loading_words"}})
                     all_words = await generate_all_words(room.game.max_rounds)
                     room.game.set_word_pool(all_words)
-                    timer_task = asyncio.create_task(_draw_guess_timer(room))
+                    room.timer_task = asyncio.create_task(_draw_guess_timer(room))
 
                 await room.broadcast_game_state()
 
@@ -197,8 +194,6 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
 
     except WebSocketDisconnect:
         await room.remove_player(username)
-        if timer_task:
-            timer_task.cancel()
 
 
 async def _draw_guess_timer(room):

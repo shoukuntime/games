@@ -8,14 +8,21 @@ function initChat(wsRef) {
     const sendBtn = document.getElementById('chatSendBtn');
     if (!input || !sendBtn) return;
 
+    // Remove old listeners to prevent duplicates on reconnect
+    const newInput = input.cloneNode(true);
+    input.parentNode.replaceChild(newInput, input);
+    const newBtn = sendBtn.cloneNode(true);
+    sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+
     function sendChat() {
-        const text = input.value.trim();
+        const inp = document.getElementById('chatInput');
+        const text = inp?.value.trim();
         if (!text || !_chatWs || _chatWs.readyState !== WebSocket.OPEN) return;
         _chatWs.send(JSON.stringify({ type: 'chat', text }));
-        input.value = '';
+        inp.value = '';
     }
-    sendBtn.addEventListener('click', sendChat);
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+    newBtn.addEventListener('click', sendChat);
+    newInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
 }
 
 function handleChatMessage(data) {
