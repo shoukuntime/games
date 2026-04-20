@@ -76,7 +76,11 @@ async def _llm_request(messages: list, max_tokens: int = 200) -> str | None:
                 logger.error(f"LLM API error: {resp.status_code} — {resp.text[:300]}")
                 return None
             data = resp.json()
-            text = data["choices"][0]["message"]["content"].strip()
+            content = data.get("choices", [{}])[0].get("message", {}).get("content")
+            if not content:
+                logger.error(f"LLM returned empty content: {str(data)[:300]}")
+                return None
+            text = content.strip()
             logger.info(f"LLM response: {text[:200]}")
             return text
     except Exception as e:
