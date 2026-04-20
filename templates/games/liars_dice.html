@@ -8,6 +8,7 @@
             <button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('show')">🌐 <span id="langLabel">中文</span> ▾</button>
             <div class="lang-dropdown"><div onclick="setLang('zh-TW')">中文</div><div onclick="setLang('en')">English</div><div onclick="setLang('ja')">日本語</div></div>
         </div>
+        <button class="nav-help" onclick="showHelp('liars-dice')" title="How to Play">❓</button>
         <span class="nav-user">{{ user.username }}</span>
     </div>
 </nav>

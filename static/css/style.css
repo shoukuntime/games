@@ -146,6 +146,48 @@ a:hover { text-decoration: underline; }
 .lang-dropdown div:hover { background: var(--primary-light); color: var(--primary); }
 .auth-lang { text-align: right; margin-bottom: 8px; }
 
+/* Help modal */
+.help-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000; padding: 20px;
+}
+.help-card {
+    background: var(--bg-card); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); max-width: 560px; width: 100%;
+    max-height: 85vh; overflow-y: auto; position: relative;
+    padding: 32px;
+}
+.help-close {
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none; font-size: 1.3rem;
+    cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+}
+.help-close:hover { background: var(--bg); color: var(--text); }
+.help-body h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; }
+.help-body h3 { font-size: 0.95rem; font-weight: 700; margin: 14px 0 6px; color: var(--text); }
+.help-body p { font-size: 0.88rem; color: var(--text-light); line-height: 1.6; margin-bottom: 6px; }
+.help-body ul { padding-left: 20px; margin-bottom: 8px; }
+.help-body li { font-size: 0.88rem; color: var(--text-light); line-height: 1.7; }
+.help-body li b { color: var(--text); }
+.help-body ul ul { margin-top: 4px; }
+@media (max-width: 640px) {
+    .help-card { padding: 20px 16px; max-height: 90vh; }
+    .help-body h2 { font-size: 1.05rem; }
+}
+
+/* Help button in navbar */
+.nav-help {
+    background: none; border: 2px solid var(--border);
+    border-radius: 50%; width: 32px; height: 32px;
+    font-size: 0.95rem; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    color: var(--text-light); transition: all 0.15s;
+}
+.nav-help:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
 /* === Main Content === */
 .main-content { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 .page-header { text-align: center; margin-bottom: 32px; }

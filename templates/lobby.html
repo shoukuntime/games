@@ -12,6 +12,7 @@
                 <div onclick="setLang('ja')">日本語</div>
             </div>
         </div>
+        <button class="nav-help" onclick="showHelp('{{ game_type }}')" title="How to Play">❓</button>
         <span class="nav-user">{{ user.username }}</span>
         <button class="btn btn-outline btn-sm" data-i18n="lobby.leave" onclick="location.href='/dashboard'">離開房間</button>
     </div>

@@ -462,6 +462,239 @@ function applyI18n() {
     });
 }
 
+// --- Game Help / Tutorial ---
+const HELP = {
+    "zh-TW": {
+        blokus: `<h2>🟦 Blokus 遊戲教學</h2>
+<h3>🎯 目標</h3><p>在 20×20 棋盤上盡可能多放置自己的棋子。</p>
+<h3>👥 人數</h3><p>2 人（各控 2 色）、3 人、或 4 人（各控 1 色）。</p>
+<h3>🧩 棋子</h3><p>每色 21 塊不同形狀的多形方塊（1~5 格）。</p>
+<h3>📏 規則</h3>
+<ul>
+<li><b>第一步</b>：棋子必須放在棋盤任一可用角落。</li>
+<li><b>之後每步</b>：新棋子必須與自己的同色棋子<b>角對角</b>相鄰。</li>
+<li>同色棋子之間<b>不可邊相鄰</b>（不同色則不限）。</li>
+<li>無法放置時可選擇跳過。</li>
+</ul>
+<h3>🏆 計分</h3>
+<ul>
+<li>每個未放置的方格 = -1 分</li>
+<li>全部放完 = +15 分（額外加分）</li>
+</ul>
+<h3>🎮 操作</h3>
+<ul>
+<li>點選棋子 → 預覽區顯示 → 拖曳至棋盤或點擊放置</li>
+<li>↻ 旋轉 / ⇕ 左右翻轉 / ⇔ 上下翻轉</li>
+<li>快捷鍵：R 旋轉 / F 左右翻 / V 上下翻 / Esc 取消</li>
+</ul>`,
+        "draw-guess": `<h2>🎨 你畫我猜 遊戲教學</h2>
+<h3>🎯 目標</h3><p>畫家畫出題目，其他人猜出答案得分。</p>
+<h3>👥 人數</h3><p>2-8 人。</p>
+<h3>📏 規則</h3>
+<ul>
+<li>每輪由一位玩家擔任<b>畫家</b>，從 3 個題目中選 1 個。</li>
+<li>畫家在畫布上畫圖，<b>不可寫字</b>。</li>
+<li>其他玩家在聊天區輸入猜測，猜對即得分。</li>
+<li>每輪限時 90 秒。</li>
+<li>越早猜對分數越高（最高 30 分）。</li>
+<li>畫家每有人猜對也得 10 分。</li>
+<li>所有人輪流畫完即結束，最高分者獲勝。</li>
+</ul>
+<h3>🎮 操作</h3>
+<ul>
+<li>畫家：選色、調筆寬、在畫布上繪圖、🗑 清除</li>
+<li>猜題者：在聊天區輸入答案，按 Enter 送出</li>
+</ul>`,
+        "cant-stop": `<h2>🎲 Can't Stop 遊戲教學</h2>
+<h3>🎯 目標</h3><p>率先攻佔 3 個欄位頂端獲勝。</p>
+<h3>👥 人數</h3><p>2-4 人。</p>
+<h3>📏 規則</h3>
+<ul>
+<li>棋盤有 11 個欄位（2~12），每欄高度不同（7 最高 13 格）。</li>
+<li>擲 4 顆骰子，分成 2 組配對，每組相加得到欄位號碼。</li>
+<li>每回合最多使用 <b>3 個臨時標記</b>。</li>
+<li>選好配對後，可選擇：
+  <ul>
+  <li>🎲 <b>繼續擲</b>：冒險推進，但若配對無法前進則<b>爆炸</b>💥，失去本回合所有進度。</li>
+  <li>✋ <b>停止</b>：鎖定本回合進度。</li>
+  </ul>
+</li>
+<li>標記到達欄位頂端 = 攻佔該欄位。</li>
+<li>已被攻佔的欄位不可再使用。</li>
+</ul>`,
+        "liars-dice": `<h2>🎭 吹牛骰子 遊戲教學</h2>
+<h3>🎯 目標</h3><p>透過喊注與質疑淘汰對手，成為最後存活者。</p>
+<h3>👥 人數</h3><p>2-6 人，每人 5 顆骰子。</p>
+<h3>📏 規則</h3>
+<ul>
+<li>每輪開始，所有人搖骰子，<b>只能看自己的</b>。</li>
+<li><b>1 點是百搭</b>，算作任何點數。</li>
+<li>輪流喊注「全場至少有 X 個 Y 點」（Y 為 2~6）。</li>
+<li>下一位必須<b>加碼</b>（數量更多，或同數量但點數更大）或<b>質疑</b>。</li>
+<li>質疑時開骰，統計全場 Y 點 + 1 點的總數：
+  <ul>
+  <li>≥ 喊注數量 → 質疑者輸，扣 1 顆骰子</li>
+  <li>＜ 喊注數量 → 喊注者輸，扣 1 顆骰子</li>
+  </ul>
+</li>
+<li>骰子歸零的玩家被淘汰。</li>
+</ul>
+<h3>💡 策略</h3>
+<ul>
+<li>觀察自己的骰子推算全場數量</li>
+<li>大膽喊注可逼對手質疑或犯錯</li>
+<li>注意場上剩餘骰子總數</li>
+</ul>`,
+    },
+    "en": {
+        blokus: `<h2>🟦 Blokus — How to Play</h2>
+<h3>🎯 Goal</h3><p>Place as many of your pieces on the 20×20 board as possible.</p>
+<h3>👥 Players</h3><p>2 (each controls 2 colors), 3, or 4 players.</p>
+<h3>🧩 Pieces</h3><p>21 unique polyomino shapes per color (1-5 squares each).</p>
+<h3>📏 Rules</h3>
+<ul>
+<li><b>First move</b>: Must cover any available corner.</li>
+<li><b>After that</b>: New pieces must touch your own color <b>diagonally</b> (corner-to-corner).</li>
+<li>Same-color pieces must <b>never</b> touch edge-to-edge.</li>
+<li>Pass if you can't place any piece.</li>
+</ul>
+<h3>🏆 Scoring</h3>
+<ul><li>-1 point per remaining square</li><li>+15 bonus for placing all pieces</li></ul>
+<h3>🎮 Controls</h3>
+<ul><li>Select piece → drag to board or click to place</li><li>R rotate / F flip H / V flip V / Esc cancel</li></ul>`,
+        "draw-guess": `<h2>🎨 Draw & Guess — How to Play</h2>
+<h3>🎯 Goal</h3><p>The artist draws, others guess the word for points.</p>
+<h3>👥 Players</h3><p>2-8 players.</p>
+<h3>📏 Rules</h3>
+<ul>
+<li>Each round, one player is the <b>artist</b> and picks a word from 3 choices.</li>
+<li>The artist draws on canvas — <b>no writing allowed</b>.</li>
+<li>Others type guesses in chat. Correct = points.</li>
+<li>90 seconds per round. Earlier guesses = more points (up to 30).</li>
+<li>Artist gets 10 points per correct guesser.</li>
+<li>Highest score after all rounds wins.</li>
+</ul>`,
+        "cant-stop": `<h2>🎲 Can't Stop — How to Play</h2>
+<h3>🎯 Goal</h3><p>Be the first to claim 3 columns.</p>
+<h3>👥 Players</h3><p>2-4 players.</p>
+<h3>📏 Rules</h3>
+<ul>
+<li>Board has 11 columns (2-12), each with different heights (7 is tallest at 13).</li>
+<li>Roll 4 dice, split into 2 pairs — each sum = a column number.</li>
+<li>Max <b>3 temporary markers</b> per turn.</li>
+<li>After each roll, choose:
+  <ul>
+  <li>🎲 <b>Continue</b>: Roll again, but if no valid pair → <b>Bust!</b> 💥 Lose all progress this turn.</li>
+  <li>✋ <b>Stop</b>: Lock in your progress.</li>
+  </ul>
+</li>
+<li>Reach the top of a column = claim it. Claimed columns are closed.</li>
+</ul>`,
+        "liars-dice": `<h2>🎭 Liar's Dice — How to Play</h2>
+<h3>🎯 Goal</h3><p>Be the last player standing by bluffing and challenging.</p>
+<h3>👥 Players</h3><p>2-6 players, 5 dice each.</p>
+<h3>📏 Rules</h3>
+<ul>
+<li>All players roll dice — you can only see <b>your own</b>.</li>
+<li><b>1s are wild</b> — they count as any face value.</li>
+<li>Take turns bidding "at least X dice showing Y" (Y = 2-6).</li>
+<li>Next player must <b>raise</b> (higher quantity, or same quantity + higher face) or <b>challenge</b>.</li>
+<li>On challenge, reveal all dice and count Y's + 1s:
+  <ul>
+  <li>≥ bid → Challenger loses a die</li>
+  <li>< bid → Bidder loses a die</li>
+  </ul>
+</li>
+<li>Player with 0 dice is eliminated. Last one standing wins!</li>
+</ul>
+<h3>💡 Strategy</h3>
+<ul><li>Use your dice to estimate the total</li><li>Bold bids force tough decisions</li><li>Watch the total dice count</li></ul>`,
+    },
+    "ja": {
+        blokus: `<h2>🟦 Blokus — 遊び方</h2>
+<h3>🎯 目的</h3><p>20×20のボードにできるだけ多くのピースを配置する。</p>
+<h3>👥 人数</h3><p>2人（各2色）、3人、または4人。</p>
+<h3>🧩 ピース</h3><p>各色21種のポリオミノ（1〜5マス）。</p>
+<h3>📏 ルール</h3>
+<ul>
+<li><b>最初の一手</b>：空いている角に配置。</li>
+<li><b>以降</b>：同色のピースと<b>角で接する</b>必要あり。</li>
+<li>同色のピース同士は<b>辺で接してはいけない</b>。</li>
+<li>置けない場合はパス。</li>
+</ul>
+<h3>🏆 スコア</h3><ul><li>残りマス1つにつき-1点</li><li>全部置けたら+15点</li></ul>
+<h3>🎮 操作</h3><ul><li>ピース選択→ドラッグで配置</li><li>R回転 / F左右反転 / V上下反転 / Escキャンセル</li></ul>`,
+        "draw-guess": `<h2>🎨 お絵描きクイズ — 遊び方</h2>
+<h3>🎯 目的</h3><p>描く人が絵を描き、他の人が当ててポイント獲得。</p>
+<h3>👥 人数</h3><p>2〜8人。</p>
+<h3>📏 ルール</h3>
+<ul>
+<li>毎ラウンド1人が<b>描く役</b>、3つのお題から1つ選択。</li>
+<li>キャンバスに絵を描く（<b>文字禁止</b>）。</li>
+<li>他の人はチャットで回答。正解でポイント獲得。</li>
+<li>各ラウンド90秒。早く当てるほど高得点（最大30点）。</li>
+<li>全員が描いた後、最高得点者の勝利。</li>
+</ul>`,
+        "cant-stop": `<h2>🎲 Can't Stop — 遊び方</h2>
+<h3>🎯 目的</h3><p>3つの列を最初に制覇した人の勝利。</p>
+<h3>👥 人数</h3><p>2〜4人。</p>
+<h3>📏 ルール</h3>
+<ul>
+<li>ボードに11列（2〜12）。各列の高さは異なる（7が最長13マス）。</li>
+<li>4つのサイコロを振り、2組に分ける。各組の合計＝列番号。</li>
+<li>1ターン最大<b>3つの仮マーカー</b>。</li>
+<li>振った後の選択：
+  <ul>
+  <li>🎲 <b>続ける</b>：再度振るが、有効なペアがなければ<b>バースト</b>💥（進捗全失）</li>
+  <li>✋ <b>ストップ</b>：進捗を確定</li>
+  </ul>
+</li>
+<li>列の頂上に到達＝制覇。制覇された列は使用不可。</li>
+</ul>`,
+        "liars-dice": `<h2>🎭 ライアーズダイス — 遊び方</h2>
+<h3>🎯 目的</h3><p>ブラフとチャレンジで相手を脱落させ、最後に残る。</p>
+<h3>👥 人数</h3><p>2〜6人、各5個のサイコロ。</p>
+<h3>📏 ルール</h3>
+<ul>
+<li>全員がサイコロを振り、<b>自分のだけ</b>確認。</li>
+<li><b>1はワイルド</b>（どの出目としてもカウント）。</li>
+<li>順番に「場に最低X個のYがある」と宣言（Y＝2〜6）。</li>
+<li>次の人は<b>上乗せ</b>か<b>チャレンジ</b>。</li>
+<li>チャレンジ時、全サイコロ公開：
+  <ul>
+  <li>≧宣言→チャレンジャーがサイコロ1個失う</li>
+  <li>＜宣言→宣言者がサイコロ1個失う</li>
+  </ul>
+</li>
+<li>サイコロ0個で脱落。最後の1人が勝利！</li>
+</ul>
+<h3>💡 戦略</h3><ul><li>自分のサイコロから全体を推測</li><li>大胆な宣言で相手を追い込む</li></ul>`,
+    },
+};
+
+function showHelp(gameType) {
+    const content = (HELP[currentLang] && HELP[currentLang][gameType]) || HELP["zh-TW"][gameType] || '';
+    if (!content) return;
+    let overlay = document.getElementById('helpOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'helpOverlay';
+        overlay.className = 'help-overlay';
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeHelp(); });
+        document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `<div class="help-card">
+        <button class="help-close" onclick="closeHelp()">✕</button>
+        <div class="help-body">${content}</div>
+    </div>`;
+    overlay.style.display = 'flex';
+}
+
+function closeHelp() {
+    const overlay = document.getElementById('helpOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
 // Auto-apply on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
     applyI18n();
