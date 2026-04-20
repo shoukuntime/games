@@ -82,10 +82,15 @@ function renderState() {
         if (state.is_drawer) {
             info.innerHTML = `<strong>${t('dg.you_draw')}</strong>`;
             wordDiv.style.display = 'block';
-            wordDiv.innerHTML = `<button class="btn btn-primary" onclick="requestWords()">${t('dg.get_words')}</button>`;
+            wordDiv.innerHTML = `<button class="btn btn-primary" id="getWordsBtn" onclick="requestWords()">${t('dg.get_words')}</button>`;
         } else {
             info.innerHTML = t('dg.wait_choose', {name: state.current_drawer});
         }
+    } else if (state.phase === 'generating') {
+        // Spinner while LLM generates words
+        info.innerHTML = `<strong>${t('dg.you_draw')}</strong>`;
+        wordDiv.style.display = 'block';
+        wordDiv.innerHTML = `<div class="generating-spinner"><span class="spinner"></span> ${t('dg.generating')}</div>`;
     } else if (state.phase === 'choosing') {
         if (state.is_drawer && state.word_choices.length > 0) {
             info.innerHTML = `<strong>${t('dg.choose_word')}</strong>`;
@@ -134,10 +139,19 @@ function renderState() {
 }
 
 function updateTimer(timeLeft) {
+    const roundTime = state?.round_time || 90;
     const fill = document.getElementById('timerFill');
-    const pct = Math.max(0, (timeLeft / 90) * 100);
+    const pct = Math.max(0, (timeLeft / roundTime) * 100);
     fill.style.width = pct + '%';
     fill.style.background = pct < 20 ? '#ef4444' : pct < 50 ? '#f59e0b' : '#22c55e';
+
+    const timerText = document.getElementById('timerText');
+    if (timerText) {
+        const min = Math.floor(timeLeft / 60);
+        const sec = timeLeft % 60;
+        timerText.textContent = min > 0 ? `${min}:${String(sec).padStart(2,'0')}` : `${sec}`;
+        timerText.className = `timer-text ${pct < 20 ? 'urgent' : ''}`;
+    }
 }
 
 // --- Drawing ---
@@ -195,7 +209,11 @@ function pickColor(color, btn) {
 }
 function setSize(s) { document.getElementById('penSize').value = s; }
 function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); ws.send(JSON.stringify({ type: 'clear_canvas' })); }
-function requestWords() { ws.send(JSON.stringify({ type: 'request_words' })); }
+function requestWords() {
+    const btn = document.getElementById('getWordsBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> ${t('dg.generating')}`; }
+    ws.send(JSON.stringify({ type: 'request_words' }));
+}
 function chooseWord(index) { ws.send(JSON.stringify({ type: 'choose_word', word_index: index })); }
 function nextRound() { ws.send(JSON.stringify({ type: 'next_round' })); }
 

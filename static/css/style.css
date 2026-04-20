@@ -702,15 +702,36 @@ a:hover { text-decoration: underline; }
 .chat-msg.wrong-guess { color: var(--warning); }
 .chat-msg.correct { color: var(--success); font-weight: 700; }
 
+.timer-row {
+    display: flex; align-items: center; gap: 10px; width: 100%; max-width: 640px;
+}
+.timer-text {
+    font-size: 1.3rem; font-weight: 800; min-width: 48px; text-align: center;
+    color: var(--text); transition: color 0.3s;
+}
+.timer-text.urgent { color: var(--danger); animation: pulse-timer 0.8s ease-in-out infinite; }
+@keyframes pulse-timer { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .timer-bar {
-    width: 100%;
-    max-width: 640px;
-    height: 6px;
+    flex: 1;
+    height: 8px;
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
 }
 .timer-fill { height: 100%; width: 100%; background: var(--success); transition: width 1s linear, background 0.3s; }
+
+/* Spinner */
+.spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+}
+.generating-spinner {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 0.95rem; color: var(--text-light); padding: 12px;
+}
+.generating-spinner .spinner { border-color: rgba(79,70,229,0.2); border-top-color: var(--primary); }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Guess panel (Draw & Guess specific) */
 .dg-guess-panel {

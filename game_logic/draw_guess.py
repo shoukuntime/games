@@ -188,13 +188,16 @@ class DrawGuessGame:
         self.round = 0
         custom_rounds = settings.get("max_rounds", 0)
         self.max_rounds = custom_rounds if custom_rounds > 0 else len(players)
+        # time_limit from settings is in minutes; convert to per-round seconds
+        time_limit_min = settings.get("time_limit", 0)
+        self.round_time = time_limit_min * 60 if time_limit_min > 0 else ROUND_TIME
         self.phase = "waiting"
         self.guessed_correctly = set()
         self.strokes = []
         self.time_left = 0
         self.round_scores = {}
         self.round_start_time = 0
-        self.first_correct_elapsed = None  # seconds elapsed when first correct
+        self.first_correct_elapsed = None
 
     def get_state(self, username: str):
         player_idx = self.players.index(username) if username in self.players else -1
@@ -220,6 +223,7 @@ class DrawGuessGame:
             "word_choices": self.word_choices if is_drawer and self.phase == "choosing" else [],
             "strokes": self.strokes,
             "time_left": self.time_left,
+            "round_time": self.round_time,
             "guessed_correctly": list(self.guessed_correctly),
         }
 
@@ -242,7 +246,9 @@ class DrawGuessGame:
         player_idx = self.players.index(username)
         if player_idx != self.current_drawer_idx:
             return []
-        self.phase = "choosing"
+        if self.phase == "generating":
+            return []  # Already generating, prevent double request
+        self.phase = "generating"
         return [{"type": "game_event", "data": {"event": "generating_words"}}]
 
     def set_word_choices(self, words: list[dict]):
@@ -257,7 +263,7 @@ class DrawGuessGame:
             return []
         self.current_word = self.word_choices[word_index]
         self.phase = "drawing"
-        self.time_left = ROUND_TIME
+        self.time_left = self.round_time
         self.guessed_correctly = set()
         self.strokes = []
         self.round_scores = {}
