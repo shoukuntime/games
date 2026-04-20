@@ -15,7 +15,7 @@
 <main class="game-page draw-guess-page">
     <div class="dg-layout">
         <div class="dg-sidebar">
-            <h3 data-i18n="dg.scoreboard">計分板</h3>
+            <div class="panel-header"><span class="panel-icon">📊</span> <span data-i18n="dg.scoreboard">計分板</span></div>
             <div id="scoreBoard"></div>
             <div class="dg-round-info">
                 <span data-i18n="dg.round">回合</span> <strong id="roundNum">1</strong> / <span id="maxRounds">?</span>
@@ -34,11 +34,13 @@
             <div id="timerBar" class="timer-bar"><div id="timerFill" class="timer-fill"></div></div>
         </div>
         <div class="dg-guess-panel">
-            <h3 data-i18n="dg.guess_title">猜題</h3>
+            <div class="panel-header"><span class="panel-icon">🔍</span> <span data-i18n="dg.guess_title">猜題</span></div>
             <div id="guessLog" class="guess-log"></div>
-            <div class="guess-input-group">
+            <div class="guess-input-wrap">
                 <input type="text" id="guessInput" data-i18n-ph="dg.guess_ph" placeholder="輸入猜測..." autocomplete="off">
-                <button class="btn btn-primary btn-sm" onclick="sendGuess()">→</button>
+                <button class="guess-send-btn" onclick="sendGuess()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
             </div>
         </div>
     </div>
