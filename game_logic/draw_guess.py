@@ -76,12 +76,19 @@ async def _llm_request(messages: list, max_tokens: int = 200) -> str | None:
                 logger.error(f"LLM API error: {resp.status_code} — {resp.text[:300]}")
                 return None
             data = resp.json()
-            content = data.get("choices", [{}])[0].get("message", {}).get("content")
+            msg = data.get("choices", [{}])[0].get("message", {})
+            # Some reasoning models put content in reasoning_content instead of content
+            content = msg.get("content") or msg.get("reasoning_content") or ""
             if not content:
-                logger.error(f"LLM returned empty content: {str(data)[:300]}")
+                logger.error(f"LLM returned empty content: {str(data)[:500]}")
                 return None
             text = content.strip()
-            logger.info(f"LLM response: {text[:200]}")
+            # For reasoning models, the actual answer may be after the thinking
+            # Try to extract the formatted lines from the end of the response
+            lines = [l for l in text.split("\n") if "|" in l]
+            if lines:
+                text = "\n".join(lines)
+            logger.info(f"LLM response: {text[:300]}")
             return text
     except Exception as e:
         logger.error(f"LLM request failed: {e}")
@@ -118,7 +125,7 @@ async def generate_words_from_llm(count: int = 3) -> list[dict]:
         f"格式（每行一組）：繁體中文|English|日本語\n"
         f"範例：追公車|Chasing a Bus|バスを追いかける\n"
         f"只輸出 {count} 行，不要其他文字。"
-    )}], max_tokens=200)
+    )}], max_tokens=1024)
     if text:
         words = []
         for line in text.strip().split("\n"):
@@ -156,7 +163,7 @@ async def judge_guess_with_llm(word: dict, guess: str) -> int:
         f"- 50-79 = related but not quite right\n"
         f"- 0-49 = wrong\n"
         f"Reply with ONLY a number, nothing else."
-    )}], max_tokens=10)
+    )}], max_tokens=256)
     if text:
         digits = "".join(c for c in text if c.isdigit())
         if digits:
