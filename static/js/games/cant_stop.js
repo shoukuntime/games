@@ -6,8 +6,13 @@ let ws, state = null;
 function connect() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(`${proto}://${location.host}/ws/${ROOM_ID}`);
-    ws.onmessage = e => handleMessage(JSON.parse(e.data));
+    ws.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'chat') handleChatMessage(msg.data);
+        else handleMessage(msg);
+    };
     ws.onclose = () => setTimeout(connect, 2000);
+    ws.onopen = () => initChat(ws);
 }
 
 function handleMessage(msg) {

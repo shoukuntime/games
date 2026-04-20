@@ -32,6 +32,7 @@
         </div>
     </div>
 </main>
+{% include "chat_panel.html" %}
 {% endblock %}
 {% block extra_js %}
 <script>const ROOM_ID = "{{ room_id }}"; const USERNAME = "{{ user.username }}";</script>

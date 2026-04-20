@@ -33,16 +33,17 @@
             </div>
             <div id="timerBar" class="timer-bar"><div id="timerFill" class="timer-fill"></div></div>
         </div>
-        <div class="dg-chat">
-            <h3 data-i18n="dg.chat">聊天 / 猜題</h3>
-            <div id="chatMessages" class="chat-messages"></div>
-            <div class="chat-input-group">
+        <div class="dg-guess-panel">
+            <h3 data-i18n="dg.guess_title">猜題</h3>
+            <div id="guessLog" class="guess-log"></div>
+            <div class="guess-input-group">
                 <input type="text" id="guessInput" data-i18n-ph="dg.guess_ph" placeholder="輸入猜測..." autocomplete="off">
-                <button class="btn btn-primary btn-sm" data-i18n="dg.send" onclick="sendGuess()">送出</button>
+                <button class="btn btn-primary btn-sm" onclick="sendGuess()">→</button>
             </div>
         </div>
     </div>
 </main>
+{% include "chat_panel.html" %}
 {% endblock %}
 {% block extra_js %}
 <script>const ROOM_ID = "{{ room_id }}"; const USERNAME = "{{ user.username }}";</script>

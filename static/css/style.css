@@ -178,6 +178,58 @@ a:hover { text-decoration: underline; }
     .help-body h2 { font-size: 1.05rem; }
 }
 
+/* Floating chat panel (all games) */
+.chat-float-btn {
+    position: fixed; bottom: 20px; right: 20px; z-index: 900;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--primary); color: #fff; border: none;
+    font-size: 1.4rem; cursor: pointer; box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s;
+}
+.chat-float-btn:hover { transform: scale(1.1); }
+.chat-float-btn .chat-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: var(--danger); color: #fff; font-size: 0.6rem;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+}
+.chat-panel {
+    position: fixed; bottom: 80px; right: 20px; z-index: 900;
+    width: 300px; max-height: 400px;
+    background: var(--bg-card); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); display: none; flex-direction: column;
+    overflow: hidden; border: 1px solid var(--border);
+}
+.chat-panel.open { display: flex; }
+.chat-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    font-weight: 700; font-size: 0.9rem;
+}
+.chat-panel-close { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-light); }
+.chat-panel .chat-messages {
+    flex: 1; overflow-y: auto; padding: 10px; min-height: 150px; max-height: 280px;
+    display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem;
+}
+.chat-panel .chat-input-row {
+    display: flex; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--border);
+}
+.chat-panel .chat-input-row input {
+    flex: 1; padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-family: inherit; font-size: 0.85rem; outline: none;
+}
+.chat-panel .chat-input-row input:focus { border-color: var(--primary); }
+.chat-panel .chat-input-row button {
+    padding: 6px 12px; background: var(--primary); color: #fff;
+    border: none; border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 0.8rem; font-weight: 600;
+}
+@media (max-width: 640px) {
+    .chat-panel { width: calc(100vw - 24px); right: 12px; bottom: 72px; }
+}
+
 /* Help button in navbar */
 .nav-help {
     background: none; border: 2px solid var(--border);
@@ -518,7 +570,7 @@ a:hover { text-decoration: underline; }
     margin: 0 auto;
     height: calc(100vh - 100px);
 }
-.dg-sidebar, .dg-chat {
+.dg-sidebar, .dg-guess-panel {
     background: var(--bg-card);
     border-radius: var(--radius);
     padding: 16px;
@@ -572,7 +624,30 @@ a:hover { text-decoration: underline; }
 }
 .timer-fill { height: 100%; width: 100%; background: var(--success); transition: width 1s linear, background 0.3s; }
 
-/* Chat */
+/* Guess panel (Draw & Guess specific) */
+.dg-guess-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.dg-guess-panel h3 { font-size: 0.95rem; margin-bottom: 10px; }
+.guess-log {
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+    margin-bottom: 8px; font-size: 0.85rem; min-height: 100px;
+}
+.guess-input-group { display: flex; gap: 6px; }
+.guess-input-group input {
+    flex: 1; padding: 8px 10px; border: 2px solid var(--border);
+    border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem; outline: none;
+}
+.guess-input-group input:focus { border-color: var(--primary); }
+
+/* DG Chat → separate from guess */
 .chat-messages {
     flex: 1;
     overflow-y: auto;

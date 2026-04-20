@@ -1,4 +1,4 @@
-/* Draw & Guess game client — LLM-judged multilingual */
+/* Draw & Guess game client — LLM-judged, chat separated from guessing */
 let ws, state = null;
 const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
@@ -7,8 +7,13 @@ let drawing = false;
 function connect() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(`${proto}://${location.host}/ws/${ROOM_ID}`);
-    ws.onmessage = e => handleMessage(JSON.parse(e.data));
+    ws.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'chat') handleChatMessage(msg.data);
+        else handleMessage(msg);
+    };
     ws.onclose = () => setTimeout(connect, 2000);
+    ws.onopen = () => initChat(ws);
 }
 
 function handleMessage(msg) {
@@ -17,32 +22,40 @@ function handleMessage(msg) {
     else if (msg.type === 'clear_canvas') ctx.clearRect(0, 0, canvas.width, canvas.height);
     else if (msg.type === 'timer') updateTimer(msg.data.time_left);
     else if (msg.type === 'game_event') handleGameEvent(msg.data);
-    else if (msg.type === 'error') addChat('⚠', msg.message, 'error');
+    else if (msg.type === 'error') addGuessLog('⚠', msg.message, 'error');
 }
 
 function handleGameEvent(d) {
     if (d.event === 'guess_result') {
-        // Private: only guesser + drawer see this
         const icon = d.correct ? '✅' : '❌';
-        const scoreText = d.correct ? ` (+${d.points})` : '';
-        const cls = d.correct ? 'correct' : 'wrong-guess';
-        addChat(icon, `${d.player}: "${d.text}" — ${t('dg.llm_score')}: ${d.llm_score}/100${scoreText}`, cls);
+        const pts = d.correct ? ` (+${d.points})` : '';
+        addGuessLog(icon, `${d.player}: "${d.text}" — ${t('dg.llm_score')}: ${d.llm_score}/100${pts}`, d.correct ? 'correct' : 'wrong-guess');
     } else if (d.event === 'correct_guess') {
-        addChat('🎉', t('dg.correct', {name: d.player, score: d.score}), 'correct');
+        addGuessLog('🎉', t('dg.correct', {name: d.player, score: d.score}), 'correct');
     } else if (d.event === 'round_end') {
-        addChat('📢', t('dg.answer_reveal', {word: d.word}), 'system');
+        addGuessLog('📢', t('dg.answer_reveal', {word: d.word}), 'system');
     } else if (d.event === 'game_over') {
         const ranking = d.ranking.map((r, i) => `${i+1}. ${r.name}: ${r.score}`).join('\n');
-        addChat('🏆', `${t('dg.game_over')}\n${ranking}`, 'system');
+        addGuessLog('🏆', `${t('dg.game_over')}\n${ranking}`, 'system');
     } else if (d.event === 'drawing_started') {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        document.getElementById('chatMessages').innerHTML = '';
+        document.getElementById('guessLog').innerHTML = '';
     }
+}
+
+// --- Guess log (private guessing area, separate from chat) ---
+function addGuessLog(icon, text, cls) {
+    const el = document.getElementById('guessLog');
+    if (!el) return;
+    const div = document.createElement('div');
+    div.className = `chat-msg ${cls || ''}`;
+    div.innerHTML = `<strong>${icon}</strong> ${text}`;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
 }
 
 function renderState() {
     if (!state) return;
-    // Scoreboard
     document.getElementById('scoreBoard').innerHTML = state.players.map(p =>
         `<div class="score-row ${p.name===state.current_drawer?'drawer':''}">
             <span>${p.name===state.current_drawer?'🎨 ':''}${p.name}</span>
@@ -52,7 +65,6 @@ function renderState() {
     document.getElementById('roundNum').textContent = state.round;
     document.getElementById('maxRounds').textContent = state.max_rounds;
 
-    // Mobile bar
     const mb = document.getElementById('dgMobilePlayers');
     if (mb) mb.innerHTML = state.players.map(p =>
         `<span class="mp-chip ${p.name===state.current_drawer?'active':''}">
@@ -78,12 +90,15 @@ function renderState() {
         if (state.is_drawer && state.word_choices.length > 0) {
             info.innerHTML = `<strong>${t('dg.choose_word')}</strong>`;
             wordDiv.style.display = 'block';
-            wordDiv.innerHTML = state.word_choices.map((w, i) =>
-                `<button class="btn btn-primary word-btn" onclick="chooseWord(${i})">
-                    <span class="word-main">${w.zh}</span>
-                    <span class="word-sub">${w.en} / ${w.ja}</span>
-                </button>`
-            ).join('');
+            wordDiv.innerHTML = state.word_choices.map((w, i) => {
+                const zh = (typeof w === 'object' && w.zh) ? w.zh : String(w);
+                const en = (typeof w === 'object' && w.en) ? w.en : '';
+                const ja = (typeof w === 'object' && w.ja) ? w.ja : '';
+                const sub = (en || ja) ? `<span class="word-sub">${en}${ja ? ' / ' + ja : ''}</span>` : '';
+                return `<button class="btn btn-primary word-btn" onclick="chooseWord(${i})">
+                    <span class="word-main">${zh}</span>${sub}
+                </button>`;
+            }).join('');
         } else if (state.is_drawer) {
             info.innerHTML = t('dg.generating');
         } else {
@@ -108,15 +123,14 @@ function renderState() {
         info.innerHTML = t('dg.game_over');
     }
 
-    // Redraw strokes
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (state.strokes) state.strokes.forEach(s => drawStroke(s));
 
-    // Disable guess for drawer or if already guessed
     const guessInput = document.getElementById('guessInput');
     const guessed = state.guessed_correctly?.includes(USERNAME);
     guessInput.disabled = state.is_drawer || state.phase !== 'drawing' || guessed;
     if (guessed) guessInput.placeholder = '✅';
+    else if (state.phase === 'drawing' && !state.is_drawer) guessInput.placeholder = t('dg.guess_ph');
 }
 
 function updateTimer(timeLeft) {
@@ -139,17 +153,15 @@ function drawStroke(stroke) {
 }
 
 let currentStroke = null;
-
 function getCanvasXY(e) {
     const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
-    return [(clientX - rect.left) * (canvas.width / rect.width), (clientY - rect.top) * (canvas.height / rect.height)];
+    const cx = e.clientX ?? e.touches?.[0]?.clientX;
+    const cy = e.clientY ?? e.touches?.[0]?.clientY;
+    return [(cx - rect.left) * (canvas.width / rect.width), (cy - rect.top) * (canvas.height / rect.height)];
 }
-
-canvas.addEventListener('mousedown', e => { startDraw(e); });
-canvas.addEventListener('mousemove', e => { continueDraw(e); });
-canvas.addEventListener('mouseup', () => { endDraw(); });
+canvas.addEventListener('mousedown', e => startDraw(e));
+canvas.addEventListener('mousemove', e => continueDraw(e));
+canvas.addEventListener('mouseup', () => endDraw());
 canvas.addEventListener('mouseleave', () => { if (drawing) endDraw(); });
 canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e); }, { passive: false });
 canvas.addEventListener('touchmove', e => { e.preventDefault(); continueDraw(e); }, { passive: false });
@@ -176,11 +188,7 @@ function endDraw() {
     currentStroke = null;
 }
 
-function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ws.send(JSON.stringify({ type: 'clear_canvas' }));
-}
-
+function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); ws.send(JSON.stringify({ type: 'clear_canvas' })); }
 function requestWords() { ws.send(JSON.stringify({ type: 'request_words' })); }
 function chooseWord(index) { ws.send(JSON.stringify({ type: 'choose_word', word_index: index })); }
 function nextRound() { ws.send(JSON.stringify({ type: 'next_round' })); }
@@ -189,20 +197,10 @@ function sendGuess() {
     const input = document.getElementById('guessInput');
     const text = input.value.trim();
     if (!text) return;
-    addChat('💬', `${USERNAME}: "${text}"`, 'my-guess');
+    addGuessLog('💬', `${USERNAME}: "${text}"`, 'my-guess');
     ws.send(JSON.stringify({ type: 'guess', text }));
     input.value = '';
 }
-
 document.getElementById('guessInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendGuess(); });
-
-function addChat(icon, text, cls = '') {
-    const el = document.getElementById('chatMessages');
-    const div = document.createElement('div');
-    div.className = `chat-msg ${cls}`;
-    div.innerHTML = `<strong>${icon}</strong> ${text}`;
-    el.appendChild(div);
-    el.scrollTop = el.scrollHeight;
-}
 
 connect();

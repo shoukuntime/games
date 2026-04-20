@@ -118,6 +118,14 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             data = await websocket.receive_json()
             msg_type = data.get("type")
 
+            if msg_type == "chat":
+                text = data.get("text", "").strip()
+                if text:
+                    await room.broadcast({"type": "chat", "data": {
+                        "player": username, "text": text,
+                    }})
+                continue
+
             if msg_type == "set_public":
                 if username == room.host:
                     room.is_public = data.get("is_public", True)
