@@ -9,29 +9,49 @@ from env_settings import get_settings
 
 logger = logging.getLogger(__name__)
 
-# Trilingual fallback words
+# Trilingual fallback words (diverse: nouns, verbs, scenes, idioms, concepts)
 FALLBACK_WORDS = [
-    {"zh": "貓", "en": "Cat", "ja": "猫"}, {"zh": "狗", "en": "Dog", "ja": "犬"},
-    {"zh": "大象", "en": "Elephant", "ja": "象"}, {"zh": "長頸鹿", "en": "Giraffe", "ja": "キリン"},
-    {"zh": "企鵝", "en": "Penguin", "ja": "ペンギン"}, {"zh": "恐龍", "en": "Dinosaur", "ja": "恐竜"},
-    {"zh": "蝴蝶", "en": "Butterfly", "ja": "蝶"}, {"zh": "鯊魚", "en": "Shark", "ja": "サメ"},
-    {"zh": "海豚", "en": "Dolphin", "ja": "イルカ"}, {"zh": "獅子", "en": "Lion", "ja": "ライオン"},
-    {"zh": "披薩", "en": "Pizza", "ja": "ピザ"}, {"zh": "漢堡", "en": "Hamburger", "ja": "ハンバーガー"},
-    {"zh": "壽司", "en": "Sushi", "ja": "寿司"}, {"zh": "冰淇淋", "en": "Ice Cream", "ja": "アイスクリーム"},
-    {"zh": "蛋糕", "en": "Cake", "ja": "ケーキ"}, {"zh": "珍珠奶茶", "en": "Bubble Tea", "ja": "タピオカミルクティー"},
-    {"zh": "雨傘", "en": "Umbrella", "ja": "傘"}, {"zh": "腳踏車", "en": "Bicycle", "ja": "自転車"},
-    {"zh": "飛機", "en": "Airplane", "ja": "飛行機"}, {"zh": "火箭", "en": "Rocket", "ja": "ロケット"},
-    {"zh": "吉他", "en": "Guitar", "ja": "ギター"}, {"zh": "鑽石", "en": "Diamond", "ja": "ダイヤモンド"},
+    # Animals
+    {"zh": "貓", "en": "Cat", "ja": "猫"}, {"zh": "長頸鹿", "en": "Giraffe", "ja": "キリン"},
+    {"zh": "企鵝", "en": "Penguin", "ja": "ペンギン"}, {"zh": "蝴蝶", "en": "Butterfly", "ja": "蝶"},
+    # Food
+    {"zh": "壽司", "en": "Sushi", "ja": "寿司"}, {"zh": "珍珠奶茶", "en": "Bubble Tea", "ja": "タピオカミルクティー"},
+    {"zh": "火鍋", "en": "Hot Pot", "ja": "火鍋"}, {"zh": "鯛魚燒", "en": "Taiyaki", "ja": "たい焼き"},
+    # Objects
     {"zh": "城堡", "en": "Castle", "ja": "城"}, {"zh": "金字塔", "en": "Pyramid", "ja": "ピラミッド"},
-    {"zh": "火山", "en": "Volcano", "ja": "火山"}, {"zh": "彩虹", "en": "Rainbow", "ja": "虹"},
-    {"zh": "太陽", "en": "Sun", "ja": "太陽"}, {"zh": "月亮", "en": "Moon", "ja": "月"},
-    {"zh": "機器人", "en": "Robot", "ja": "ロボット"}, {"zh": "超人", "en": "Superman", "ja": "スーパーマン"},
-    {"zh": "忍者", "en": "Ninja", "ja": "忍者"}, {"zh": "海盜", "en": "Pirate", "ja": "海賊"},
-    {"zh": "消防員", "en": "Firefighter", "ja": "消防士"}, {"zh": "太空人", "en": "Astronaut", "ja": "宇宙飛行士"},
-    {"zh": "游泳", "en": "Swimming", "ja": "水泳"}, {"zh": "滑雪", "en": "Skiing", "ja": "スキー"},
-    {"zh": "釣魚", "en": "Fishing", "ja": "釣り"}, {"zh": "跳舞", "en": "Dancing", "ja": "ダンス"},
-    {"zh": "聖誕樹", "en": "Christmas Tree", "ja": "クリスマスツリー"}, {"zh": "雪人", "en": "Snowman", "ja": "雪だるま"},
+    {"zh": "摩天輪", "en": "Ferris Wheel", "ja": "観覧車"}, {"zh": "紅綠燈", "en": "Traffic Light", "ja": "信号機"},
+    # Actions / Scenes
+    {"zh": "衝浪", "en": "Surfing", "ja": "サーフィン"}, {"zh": "求婚", "en": "Proposal", "ja": "プロポーズ"},
+    {"zh": "打噴嚏", "en": "Sneeze", "ja": "くしゃみ"}, {"zh": "夢遊", "en": "Sleepwalk", "ja": "夢遊病"},
+    {"zh": "追公車", "en": "Chasing a Bus", "ja": "バスを追いかける"},
+    {"zh": "曬衣服", "en": "Hang Laundry", "ja": "洗濯物を干す"},
+    # Complex / Abstract
+    {"zh": "地心引力", "en": "Gravity", "ja": "重力"}, {"zh": "時差", "en": "Jet Lag", "ja": "時差ボケ"},
+    {"zh": "塞車", "en": "Traffic Jam", "ja": "渋滞"}, {"zh": "失眠", "en": "Insomnia", "ja": "不眠症"},
+    {"zh": "自拍", "en": "Selfie", "ja": "自撮り"}, {"zh": "直播", "en": "Live Stream", "ja": "ライブ配信"},
+    # Idioms / Phrases
+    {"zh": "對牛彈琴", "en": "Pearls Before Swine", "ja": "馬の耳に念仏"},
+    {"zh": "井底之蛙", "en": "Frog in a Well", "ja": "井の中の蛙"},
+    {"zh": "畫蛇添足", "en": "Gild the Lily", "ja": "蛇足"},
+    {"zh": "掩耳盜鈴", "en": "Bury Head in Sand", "ja": "臭い物に蓋"},
+    # Pop culture / Modern
+    {"zh": "外送員", "en": "Delivery Driver", "ja": "配達員"},
+    {"zh": "逃生室", "en": "Escape Room", "ja": "脱出ゲーム"},
+    {"zh": "露營", "en": "Camping", "ja": "キャンプ"},
+    {"zh": "跳蚤市場", "en": "Flea Market", "ja": "フリーマーケット"},
+    {"zh": "密室殺人", "en": "Locked Room Murder", "ja": "密室殺人"},
+    {"zh": "鬼屋", "en": "Haunted House", "ja": "お化け屋敷"},
+    {"zh": "煙火大會", "en": "Fireworks Festival", "ja": "花火大会"},
+    {"zh": "夾娃娃機", "en": "Claw Machine", "ja": "クレーンゲーム"},
+    {"zh": "泡溫泉", "en": "Hot Spring Bath", "ja": "温泉に入る"},
+    {"zh": "搶紅包", "en": "Red Envelope Rush", "ja": "お年玉争奪"},
 ]
+
+# Used to tell LLM what NOT to generate
+FALLBACK_ZH_SET = {w["zh"] for w in FALLBACK_WORDS}
+
+# Track recently used words across rounds to avoid repeats
+_recent_words: list[str] = []
 
 PASS_THRESHOLD = 80
 BASE_SCORE = 30
@@ -66,22 +86,51 @@ async def _llm_request(messages: list, max_tokens: int = 200) -> str | None:
 
 async def generate_words_from_llm(count: int = 3) -> list[dict]:
     """Generate trilingual word choices. Returns list of {zh, en, ja}."""
+    global _recent_words
+    # Build exclusion list
+    exclude = list(FALLBACK_ZH_SET | set(_recent_words[-30:]))
+    exclude_str = "、".join(exclude[:40])
+
+    # Pick a random category emphasis for variety
+    categories = [
+        "動作或場景（如：追公車、泡溫泉、打噴嚏）",
+        "成語或俗語（如：對牛彈琴、守株待兔）",
+        "現代生活（如：直播、外送、自拍、塞車）",
+        "職業或角色（如：魔術師、偵探、考古學家）",
+        "情緒或狀態（如：失眠、緊張、戀愛、飢餓）",
+        "節日或活動（如：煙火大會、萬聖節、畢業典禮）",
+        "自然現象（如：龍捲風、極光、海市蜃樓）",
+        "奇幻/虛構（如：獨角獸、時光機、魔法陣）",
+    ]
+    focus = random.choice(categories)
+
     text = await _llm_request([{"role": "user", "content": (
-        f"Generate {count} concrete, drawable nouns for a drawing guessing game.\n"
-        "For each word, provide translations in Chinese (Traditional), English, and Japanese.\n"
-        "Format (one per line): Chinese|English|Japanese\n"
-        "Example: 貓|Cat|猫\n"
-        f"Only output {count} lines, nothing else."
+        f"你是「你畫我猜」遊戲的出題者。請生成 {count} 個有趣、可以用畫表達的詞彙。\n"
+        f"本次主題方向偏重：{focus}\n"
+        f"詞彙可以是：名詞、動詞、場景、成語、抽象概念、流行用語等，不限於簡單名詞。\n"
+        f"難度要有變化（1 個簡單、1 個中等、1 個有挑戰性）。\n"
+        f"請避免以下已出過的詞：{exclude_str}\n"
+        f"每個詞提供繁體中文、英文、日文翻譯。\n"
+        f"格式（每行一組）：繁體中文|English|日本語\n"
+        f"範例：追公車|Chasing a Bus|バスを追いかける\n"
+        f"只輸出 {count} 行，不要其他文字。"
     )}], max_tokens=200)
     if text:
         words = []
         for line in text.strip().split("\n"):
+            line = line.strip()
+            if not line or "|" not in line:
+                continue
             parts = [p.strip() for p in line.split("|")]
-            if len(parts) >= 3:
+            if len(parts) >= 3 and parts[0] not in FALLBACK_ZH_SET:
                 words.append({"zh": parts[0], "en": parts[1], "ja": parts[2]})
         if len(words) >= count:
-            return words[:count]
-        logger.warning(f"LLM returned {len(words)} words, expected {count}. Raw: {text}")
+            result = words[:count]
+            _recent_words.extend(w["zh"] for w in result)
+            if len(_recent_words) > 60:
+                _recent_words = _recent_words[-60:]
+            return result
+        logger.warning(f"LLM returned {len(words)} valid words, expected {count}. Raw: {text}")
     return random.sample(FALLBACK_WORDS, min(count, len(FALLBACK_WORDS)))
 
 
