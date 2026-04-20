@@ -118,15 +118,17 @@ async def judge_guess_with_llm(word: dict, guess: str) -> int:
 
 
 class DrawGuessGame:
-    def __init__(self, players: list[str]):
+    def __init__(self, players: list[str], settings: dict = None):
         self.players = players
         self.num_players = len(players)
+        settings = settings or {}
         self.scores = {p: 0 for p in players}
         self.current_drawer_idx = 0
         self.current_word = None  # {zh, en, ja}
         self.word_choices = []    # list of {zh, en, ja}
         self.round = 0
-        self.max_rounds = len(players)
+        custom_rounds = settings.get("max_rounds", 0)
+        self.max_rounds = custom_rounds if custom_rounds > 0 else len(players)
         self.phase = "waiting"
         self.guessed_correctly = set()
         self.strokes = []

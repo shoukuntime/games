@@ -14,6 +14,10 @@ class Room:
         self.connections: dict[str, WebSocket] = {}
         self.game = None
         self.status = "waiting"  # waiting, playing, finished
+        self.settings: dict = {
+            "time_limit": 0,    # minutes, 0 = unlimited
+            "max_rounds": 0,    # 0 = default per game
+        }
 
     def get_lobby_state(self):
         from game_logic import GAME_INFO
@@ -28,6 +32,7 @@ class Room:
             "max_players": info["max_players"],
             "status": self.status,
             "is_public": self.is_public,
+            "settings": self.settings,
         }
 
     async def add_player(self, username: str, ws: WebSocket):
@@ -94,7 +99,7 @@ class Room:
     def start_game(self):
         from game_logic import GAME_CLASSES
         cls = GAME_CLASSES[self.game_type]
-        self.game = cls(self.players)
+        self.game = cls(self.players, settings=self.settings)
         self.status = "playing"
 
     async def handle_action(self, username: str, action: dict):

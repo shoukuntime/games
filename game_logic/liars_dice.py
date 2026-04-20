@@ -3,9 +3,10 @@
 import random
 
 class LiarsDiceGame:
-    def __init__(self, players: list[str]):
+    def __init__(self, players: list[str], settings: dict = None):
         self.players = players
         self.num_players = len(players)
+        settings = settings or {}
         self.dice_count = {i: 5 for i in range(self.num_players)}  # dice per player
         self.dice = {}  # player_idx -> list of dice values
         self.alive = [True] * self.num_players

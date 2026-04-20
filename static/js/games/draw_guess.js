@@ -188,6 +188,12 @@ function endDraw() {
     currentStroke = null;
 }
 
+function pickColor(color, btn) {
+    document.getElementById('penColor').value = color;
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+}
+function setSize(s) { document.getElementById('penSize').value = s; }
 function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); ws.send(JSON.stringify({ type: 'clear_canvas' })); }
 function requestWords() { ws.send(JSON.stringify({ type: 'request_words' })); }
 function chooseWord(index) { ws.send(JSON.stringify({ type: 'choose_word', word_index: index })); }

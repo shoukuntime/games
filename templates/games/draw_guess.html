@@ -27,9 +27,25 @@
             <div id="wordChoices" class="word-choices" style="display:none"></div>
             <div class="canvas-wrapper"><canvas id="drawCanvas" width="640" height="480"></canvas></div>
             <div id="drawTools" class="draw-tools" style="display:none">
-                <input type="color" id="penColor" value="#000000">
-                <input type="range" id="penSize" min="2" max="20" value="4">
-                <button class="btn btn-sm btn-secondary" onclick="clearCanvas()">🗑</button>
+                <div class="color-palette">
+                    <button class="color-swatch active" style="background:#000000" onclick="pickColor('#000000',this)"></button>
+                    <button class="color-swatch" style="background:#ffffff;border-color:#ccc" onclick="pickColor('#ffffff',this)"></button>
+                    <button class="color-swatch" style="background:#ef4444" onclick="pickColor('#ef4444',this)"></button>
+                    <button class="color-swatch" style="background:#f97316" onclick="pickColor('#f97316',this)"></button>
+                    <button class="color-swatch" style="background:#eab308" onclick="pickColor('#eab308',this)"></button>
+                    <button class="color-swatch" style="background:#22c55e" onclick="pickColor('#22c55e',this)"></button>
+                    <button class="color-swatch" style="background:#3b82f6" onclick="pickColor('#3b82f6',this)"></button>
+                    <button class="color-swatch" style="background:#8b5cf6" onclick="pickColor('#8b5cf6',this)"></button>
+                    <button class="color-swatch" style="background:#ec4899" onclick="pickColor('#ec4899',this)"></button>
+                    <button class="color-swatch" style="background:#78716c" onclick="pickColor('#78716c',this)"></button>
+                    <input type="color" id="penColor" value="#000000" class="color-custom" onchange="pickColor(this.value,null)" title="自訂">
+                </div>
+                <div class="size-tools">
+                    <span class="size-dot size-sm" onclick="setSize(3)"></span>
+                    <input type="range" id="penSize" min="2" max="24" value="4">
+                    <span class="size-dot size-lg" onclick="setSize(16)"></span>
+                    <button class="tool-btn" onclick="clearCanvas()">🗑</button>
+                </div>
             </div>
             <div id="timerBar" class="timer-bar"><div id="timerFill" class="timer-fill"></div></div>
         </div>

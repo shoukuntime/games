@@ -60,9 +60,10 @@ for name, cells in PIECES.items():
 
 
 class BlokusGame:
-    def __init__(self, players: list[str]):
+    def __init__(self, players: list[str], settings: dict = None):
         self.players = players
         self.num_players = len(players)
+        settings = settings or {}
 
         # Always 4 colors, assign to players
         if self.num_players == 2:

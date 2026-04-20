@@ -44,6 +44,35 @@
                 </label>
             </div>
 
+            <!-- Game settings (host only) -->
+            <div id="gameSettings" class="room-settings" style="display:none">
+                <div class="setting-row">
+                    <span class="setting-icon">⏱</span>
+                    <span class="setting-label" data-i18n="lobby.time_limit">時間限制</span>
+                    <select id="timeLimitSel" class="setting-select" onchange="updateSettings()">
+                        <option value="0" data-i18n="lobby.no_limit">無限制</option>
+                        <option value="5">5 min</option>
+                        <option value="10">10 min</option>
+                        <option value="15">15 min</option>
+                        <option value="20">20 min</option>
+                        <option value="30">30 min</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-icon">🔄</span>
+                    <span class="setting-label" data-i18n="lobby.rounds">回合數</span>
+                    <select id="roundsSel" class="setting-select" onchange="updateSettings()">
+                        <option value="0" data-i18n="lobby.default">預設</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="5">5</option>
+                        <option value="8">8</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="lobby-players">
                 <div class="lobby-players-header">
                     <span id="playerCount">1</span> / {{ game_info.max_players }} <span data-i18n="lobby.players">位玩家</span>
@@ -97,9 +126,16 @@ function updateLobby(data) {
 
     const isHost = (data.host === USERNAME);
     document.getElementById('roomSettings').style.display = isHost ? 'block' : 'none';
+    document.getElementById('gameSettings').style.display = isHost ? 'block' : 'none';
     document.getElementById('startBtn').style.display = isHost ? 'block' : 'none';
     document.getElementById('startBtn').disabled = data.players.length < MIN_PLAYERS;
     document.getElementById('waitMsg').style.display = isHost ? 'none' : 'block';
+
+    // Sync settings display
+    if (data.settings) {
+        document.getElementById('timeLimitSel').value = data.settings.time_limit || 0;
+        document.getElementById('roundsSel').value = data.settings.max_rounds || 0;
+    }
 }
 
 function updateVisUI() {
@@ -124,6 +160,13 @@ function togglePublic() {
     isPublic = !isPublic;
     updateVisUI();
     ws.send(JSON.stringify({ type: 'set_public', is_public: isPublic }));
+}
+
+function updateSettings() {
+    ws.send(JSON.stringify({ type: 'set_settings', settings: {
+        time_limit: parseInt(document.getElementById('timeLimitSel').value),
+        max_rounds: parseInt(document.getElementById('roundsSel').value),
+    }}));
 }
 
 function startGame() { ws.send(JSON.stringify({ type: 'start_game' })); }

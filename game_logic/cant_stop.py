@@ -13,9 +13,10 @@ WIN_COLUMNS = 3
 
 
 class CantStopGame:
-    def __init__(self, players: list[str]):
+    def __init__(self, players: list[str], settings: dict = None):
         self.players = players
         self.num_players = len(players)
+        settings = settings or {}
         # permanent[player_idx][col] = steps from bottom (0-based)
         self.permanent = [{} for _ in range(self.num_players)]
         # temp markers for current turn: col -> step position

@@ -132,6 +132,14 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                     await room.broadcast({"type": "lobby_update", "data": room.get_lobby_state()})
                 continue
 
+            if msg_type == "set_settings":
+                if username == room.host:
+                    s = data.get("settings", {})
+                    room.settings["time_limit"] = max(0, int(s.get("time_limit", 0)))
+                    room.settings["max_rounds"] = max(0, int(s.get("max_rounds", 0)))
+                    await room.broadcast({"type": "lobby_update", "data": room.get_lobby_state()})
+                continue
+
             if msg_type == "start_game":
                 if username != room.host:
                     await room.send_to(username, {"type": "error", "message": "只有房主可以開始遊戲"})
