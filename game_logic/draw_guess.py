@@ -2,9 +2,12 @@
 
 import random
 import time
+import logging
 import httpx
 
 from env_settings import get_settings
+
+logger = logging.getLogger(__name__)
 
 # Trilingual fallback words
 FALLBACK_WORDS = [
@@ -35,86 +38,82 @@ BASE_SCORE = 30
 ROUND_TIME = 90
 
 
-async def generate_words_from_llm(count: int = 3) -> list[dict]:
-    """Generate trilingual word choices. Returns list of {zh, en, ja}."""
+async def _llm_request(messages: list, max_tokens: int = 200) -> str | None:
+    """Shared LLM API call. Returns response text or None on failure."""
     settings = get_settings()
     if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your-llm-api-key":
-        return random.sample(FALLBACK_WORDS, min(count, len(FALLBACK_WORDS)))
+        logger.info("LLM not configured (API key is default), using fallback")
+        return None
+    logger.info(f"LLM request: url={settings.LLM_API_URL}, model={settings.LLM_MODEL}")
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
                 settings.LLM_API_URL,
                 headers={"Authorization": f"Bearer {settings.LLM_API_KEY}", "Content-Type": "application/json"},
-                json={
-                    "model": settings.LLM_MODEL,
-                    "messages": [{"role": "user", "content": (
-                        f"Generate {count} concrete, drawable nouns for a drawing guessing game.\n"
-                        "For each word, provide translations in Chinese (Traditional), English, and Japanese.\n"
-                        "Format (one per line): Chinese|English|Japanese\n"
-                        "Example: 貓|Cat|猫\n"
-                        f"Only output {count} lines, nothing else."
-                    )}],
-                    "max_tokens": 200,
-                },
+                json={"model": settings.LLM_MODEL, "messages": messages, "max_tokens": max_tokens},
             )
-            text = resp.json()["choices"][0]["message"]["content"].strip()
-            words = []
-            for line in text.strip().split("\n"):
-                parts = [p.strip() for p in line.split("|")]
-                if len(parts) >= 3:
-                    words.append({"zh": parts[0], "en": parts[1], "ja": parts[2]})
-            if len(words) >= count:
-                return words[:count]
-    except Exception:
-        pass
+            if resp.status_code != 200:
+                logger.error(f"LLM API error: {resp.status_code} — {resp.text[:300]}")
+                return None
+            data = resp.json()
+            text = data["choices"][0]["message"]["content"].strip()
+            logger.info(f"LLM response: {text[:200]}")
+            return text
+    except Exception as e:
+        logger.error(f"LLM request failed: {e}")
+        return None
+
+
+async def generate_words_from_llm(count: int = 3) -> list[dict]:
+    """Generate trilingual word choices. Returns list of {zh, en, ja}."""
+    text = await _llm_request([{"role": "user", "content": (
+        f"Generate {count} concrete, drawable nouns for a drawing guessing game.\n"
+        "For each word, provide translations in Chinese (Traditional), English, and Japanese.\n"
+        "Format (one per line): Chinese|English|Japanese\n"
+        "Example: 貓|Cat|猫\n"
+        f"Only output {count} lines, nothing else."
+    )}], max_tokens=200)
+    if text:
+        words = []
+        for line in text.strip().split("\n"):
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) >= 3:
+                words.append({"zh": parts[0], "en": parts[1], "ja": parts[2]})
+        if len(words) >= count:
+            return words[:count]
+        logger.warning(f"LLM returned {len(words)} words, expected {count}. Raw: {text}")
     return random.sample(FALLBACK_WORDS, min(count, len(FALLBACK_WORDS)))
 
 
 async def judge_guess_with_llm(word: dict, guess: str) -> int:
     """Use LLM to score a guess 0-100. Returns score."""
-    settings = get_settings()
     # Quick exact match check first
     guess_lower = guess.strip().lower()
     for lang in ["zh", "en", "ja"]:
         if guess_lower == word.get(lang, "").lower():
             return 100
 
-    if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your-llm-api-key":
-        # Fallback: simple partial matching
-        for lang in ["zh", "en", "ja"]:
-            w = word.get(lang, "").lower()
-            if w and (w in guess_lower or guess_lower in w):
-                return 90
-        return 0
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.post(
-                settings.LLM_API_URL,
-                headers={"Authorization": f"Bearer {settings.LLM_API_KEY}", "Content-Type": "application/json"},
-                json={
-                    "model": settings.LLM_MODEL,
-                    "messages": [{"role": "user", "content": (
-                        f"You are a judge for a drawing guessing game.\n"
-                        f"The answer is: {word['zh']} / {word['en']} / {word['ja']}\n"
-                        f"The player guessed: \"{guess}\"\n"
-                        f"Score the guess from 0 to 100:\n"
-                        f"- 100 = exact match or obvious synonym in any language\n"
-                        f"- 80-99 = close enough (e.g. 'kitty' for 'cat')\n"
-                        f"- 50-79 = related but not quite right\n"
-                        f"- 0-49 = wrong\n"
-                        f"Reply with ONLY a number, nothing else."
-                    )}],
-                    "max_tokens": 10,
-                },
-            )
-            score_text = resp.json()["choices"][0]["message"]["content"].strip()
-            return min(100, max(0, int("".join(c for c in score_text if c.isdigit()) or "0")))
-    except Exception:
-        # Fallback
-        for lang in ["zh", "en", "ja"]:
-            if guess_lower == word.get(lang, "").lower():
-                return 100
-        return 0
+    text = await _llm_request([{"role": "user", "content": (
+        f"You are a judge for a drawing guessing game.\n"
+        f"The answer is: {word['zh']} / {word['en']} / {word['ja']}\n"
+        f"The player guessed: \"{guess}\"\n"
+        f"Score the guess from 0 to 100:\n"
+        f"- 100 = exact match or obvious synonym in any language\n"
+        f"- 80-99 = close enough (e.g. 'kitty' for 'cat')\n"
+        f"- 50-79 = related but not quite right\n"
+        f"- 0-49 = wrong\n"
+        f"Reply with ONLY a number, nothing else."
+    )}], max_tokens=10)
+    if text:
+        digits = "".join(c for c in text if c.isdigit())
+        if digits:
+            return min(100, max(0, int(digits)))
+    # Fallback: simple matching
+    for lang in ["zh", "en", "ja"]:
+        w = word.get(lang, "").lower()
+        if w and (w in guess_lower or guess_lower in w):
+            return 90
+    return 0
 
 
 class DrawGuessGame:

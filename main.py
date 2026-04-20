@@ -21,7 +21,13 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import logging
+    logging.basicConfig(level=logging.INFO)
     Base.metadata.create_all(bind=engine)
+    # Log LLM config status
+    s = get_settings()
+    llm_ok = s.LLM_API_KEY and s.LLM_API_KEY != "your-llm-api-key"
+    logging.info(f"LLM config: url={s.LLM_API_URL}, model={s.LLM_MODEL}, key={'✅ set' if llm_ok else '❌ not set'}")
     yield
 
 
